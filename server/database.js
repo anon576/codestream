@@ -115,11 +115,32 @@ export async function getInternshipsByID(id){
     return internships[0]
 }
 
-export async function enrolledInternship(internshipID,userID,progress){
-    const [enrollment] = await pool.query(`insert into enrolledInternship(internshipsID, userID,progress) values(?,?,?)`,[internshipID,userID,progress])
+export async function enrolledInternship(internshipID,userID,progress,offerLetter,complateLetter,complateDate){
+    const [enrollment] = await pool.query(`insert into enrolledInternship(internshipsID, userID,progress,offerLetter,complateLetter,complateDate) values(?,?,?,?,?,?)`,[internshipID,userID,progress,offerLetter,complateLetter,complateDate])
 
     return enrollment.insertId
 }
+
+
+export async function getTodaysEnrollledInternship(){
+    const todayDate = new Date().toISOString().split('T')[0];
+    const [intern] = await pool.query(`select * from enrolledInternship where Date(date)=?`,todayDate) 
+
+    return intern
+}
+
+
+
+
+export async function getTodaysComplateEnrollledInternship(){
+    const todayDate = new Date().toISOString().split('T')[0];
+    const [intern] = await pool.query(`select * from enrolledInternship where Date(complateDate)=?`,todayDate) 
+
+    return intern
+}
+
+// console.log(await getTodaysEnrollledInternship())
+
 
 export async function getContent(iID,pageNo){
     const [con] = await pool.query(`select * from internshipContent where internshipsID=? and pageNo=?`,[iID,pageNo])

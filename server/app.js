@@ -97,14 +97,18 @@ app.post('/verifyForgetOTP',async(req,res)=>{
 })
 
 
-// ------------------------Apply Form ---------------------
+// ---------------------Apply Form ---------------------
 
 app.post('/enrolledInternship',async(req,res)=>{
     const {internshipID} = req.body
-    console.log(req.session.userData.userID)
     const userID = req.session.userData.userID
     const progress = 0
-    const enrollment = await enrolledInternship(internshipID,userID,progress)
+    const offerLetter = false
+    const complateLetter = false
+    const complateDate = new Date()
+    complateDate.setDate(complateDate.getDate() + 30)
+    const formattedComplateDate = complateDate.toISOString().split('T')[0]
+    const enrollment = await enrolledInternship(internshipID,userID,progress,offerLetter,complateLetter,formattedComplateDate)
     res.json({message:"success",enrollmentID:enrollment})
 })
 
@@ -197,6 +201,7 @@ app.get("/internships",async(req,res)=>{
     const internships = await getAllInternships()
     res.send(internships)
 })
+
 
 app.get("/internships/:id",async(req,res)=>{
     const id = req.params.id
