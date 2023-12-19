@@ -3,7 +3,7 @@ import bodyparser from 'body-parser'
 import session from 'express-session'
 
 
-import {checkUserExist,registerUser,getUserbyID,loginUser,updatePassword,addInternship,updateInternship,getAllInternships,getInternshipsByID,delateInternshipByID,enrolledInternship,addContent,updateInternshipContent,getContent} from './database.js'
+import {checkUserExist,registerUser,getUserbyID,loginUser,updatePassword,addInternship,updateInternship,getAllInternships,getInternshipsByID,delateInternshipByID,enrolledInternship,addContent,updateInternshipContent,getContent, updateProgress,addCourse,updateCourse,delateCourseByID,addCourseContent,updatecourseContent,updateUserData,addService, updateService,delateServiceByID} from './database.js'
 import { sendOTPMail,generateOTP,checkAdmin } from './utils.js'
 
 // const PORT = PRE
@@ -21,7 +21,47 @@ app.use(
 
 
 
-// --------User Registration------------------------------
+
+//------------Home Page Router----------------------
+
+
+
+// Get all Internship-----------------
+app.get("/internships",async(req,res)=>{
+    const internships = await getAllInternships()
+    res.send(internships)
+})
+
+
+app.get("/internships/:id",async(req,res)=>{
+    const id = req.params.id
+    const internship = await getInternshipsByID(id)
+    res.send(internship)
+})
+
+
+// Enrolling In Intenrhsip-------------
+app.post('/enrolledInternship',async(req,res)=>{
+    const {internshipID} = req.body
+    const userID = req.session.userData.userID
+    const progress = 0
+    const offerLetter = false
+    const complateLetter = false
+    const complateDate = new Date()
+    complateDate.setDate(complateDate.getDate() + 30)
+    const formattedComplateDate = complateDate.toISOString().split('T')[0]
+    const enrollment = await enrolledInternship(internshipID,userID,progress,offerLetter,complateLetter,formattedComplateDate)
+    res.json({message:"success",enrollmentID:enrollment})
+})
+
+
+
+
+
+// -------------------User Route------------------------------
+
+
+// Register user----------------------------
 app.post('/register',async(req,res)=>{
     const{name,email,password} = req.body
     const emailExists = await checkUserExist(email)
@@ -42,6 +82,7 @@ app.post('/register',async(req,res)=>{
 
 })
 
+
 app.post('/verifyOTP', async(req,res)=>{
     const {otp} = req.body
     const data = req.session.tempdata
@@ -54,8 +95,20 @@ app.post('/verifyOTP', async(req,res)=>{
 })
 
 
-// ------------------User Login-------------------
 
+
+//Update User Data----------------------
+app.post('/updateUserData',async(req,res)=>{
+    const {name,email,password,college,address,dob,mobile} = req.body
+    const id = req.session.userData.userID
+    const user = await updateUserData(id,name,email,password,college,address,dob,mobile)
+
+    res.send(user)
+})
+
+
+
+// User Login-------------------
 app.post('/login', async(req,res)=>{
     const {email,password} = req.body
     const user = await loginUser(email,password)
@@ -68,8 +121,7 @@ app.post('/login', async(req,res)=>{
 
 
 
-
-// -----------------------Forget Password-----------------
+// Forget Password-----------------
 app.post('/forgetPassword',async(req,res)=>{
     const {email} = req.body
     const emailExists = await checkUserExist(email)
@@ -97,26 +149,20 @@ app.post('/verifyForgetOTP',async(req,res)=>{
 })
 
 
-// ---------------------Apply Form ---------------------
-
-app.post('/enrolledInternship',async(req,res)=>{
-    const {internshipID} = req.body
-    const userID = req.session.userData.userID
-    const progress = 0
-    const offerLetter = false
-    const complateLetter = false
-    const complateDate = new Date()
-    complateDate.setDate(complateDate.getDate() + 30)
-    const formattedComplateDate = complateDate.toISOString().split('T')[0]
-    const enrollment = await enrolledInternship(internshipID,userID,progress,offerLetter,complateLetter,formattedComplateDate)
-    res.json({message:"success",enrollmentID:enrollment})
+// Get Internship Content
+app.get("/content/:iID/:pageNo",async(req,res)=>{
+    const {userID} = req.session.userData
+    const iID = req.params.iID
+    const pageNo = req.params.pageNo
+    const progress = await updateProgress(pageNo,userID,iID)
+    const con = await getContent(iID,pageNo)
+    res.send({'content':con,'progress':progress})
 })
-
 
 
 // ----------------------Admin Routes---------------------
 
-
+// Admin Login--------------------------
 app.post('/adminLogin',async(req,res)=>{
     const {username,password} = req.body
     if(checkAdmin(username,password)){
@@ -131,10 +177,7 @@ app.post('/adminLogin',async(req,res)=>{
 
 
 
-
-
-
-// --------------Admin Internship Route----------------
+// Create Internship Route----------------
 app.post('/createInternship',async(req,res)=>{
     const {username,password} = req.session.adminData
     if(!checkAdmin(username,password)){
@@ -146,6 +189,9 @@ app.post('/createInternship',async(req,res)=>{
 })
 
 
+
+
+// Update Internship Route----------------------
 app.post('/updateInternship',async(req,res)=>{
     const {username,password} = req.session.adminData
     if(!checkAdmin(username,password)){
@@ -157,6 +203,8 @@ app.post('/updateInternship',async(req,res)=>{
 })
 
 
+
+// Delate Internship Route--------------------
 app.post('/delateInternship/:id',async(req,res)=>{
     const {username,password} = req.session.adminData
     if(!checkAdmin(username,password)){
@@ -171,6 +219,7 @@ app.post('/delateInternship/:id',async(req,res)=>{
 })
 
 
+// Upload Content in Internship----------------------------
 app.post('/uploadContent',async(req,res)=>{
     const {username,password} = req.session.adminData
     if(!checkAdmin(username,password)){
@@ -183,6 +232,8 @@ app.post('/uploadContent',async(req,res)=>{
 
 })
 
+
+// Update Internship Cotent----------------------
 app.post('/updateContent',async(req,res)=>{
     const {username,password} = req.session.adminData
     if(!checkAdmin(username,password)){
@@ -196,25 +247,117 @@ app.post('/updateContent',async(req,res)=>{
 })
 
 
-// ------------------Internship Routes-----------------
-app.get("/internships",async(req,res)=>{
-    const internships = await getAllInternships()
-    res.send(internships)
+
+
+
+
+//  Add Course Route---------------------------------
+app.post('/createCourse',async(req,res)=>{
+    const {username,password} = req.session.adminData
+    if(!checkAdmin(username,password)){
+        return res.json({message:'Login with admin Credentials'})
+    }
+    const {name,price,level,tabdescription,description,imgurl} = req.body
+    const course = await addCourse(name,price,level,tabdescription,description,imgurl)
+    res.json({message:"Course Added",internship:course})
 })
 
 
-app.get("/internships/:id",async(req,res)=>{
+// Update Course Route-------------------------------
+app.post('/updateCourse',async(req,res)=>{
+    const {username,password} = req.session.adminData
+    if(!checkAdmin(username,password)){
+        return res.json({message:'Login with admin Credentials'})
+    }
+    const {id,name,price,level,tabdescription,description,imgurl} = req.body
+    const course = await updateCourse(id,name,price,level,tabdescription,description,imgurl)
+    res.json({message:"Course Updated",course:course})
+})
+
+
+// Delate Course Route-----------------------------------
+app.post('/delateCourse/:id',async(req,res)=>{
+    const {username,password} = req.session.adminData
+    if(!checkAdmin(username,password)){
+        return res.json({message:'Login with admin Credentials'})
+    }
     const id = req.params.id
-    const internship = await getInternshipsByID(id)
-    res.send(internship)
+    const course = await delateCourseByID(id)
+    if(course == undefined){
+        return res.json({message:"course delated successfully"})
+    }
+
+})
+
+// Upload Course Content-------------------------
+app.post('/uploadCourseContent',async(req,res)=>{
+    const {username,password} = req.session.adminData
+    if(!checkAdmin(username,password)){
+        return res.json({message:'Login with admin Credentials'})
+    }
+    const {title,content,pageNo,courseID} = req.body
+    const con = await addCourseContent(title,content,pageNo,courseID)
+
+    res.json({message:"success",con:con})
+
 })
 
 
-app.get("/content/:iID/:pageNo",async(req,res)=>{
-    const iID = req.params.iID
-    const pageNo = req.params.pageNo
-    const con = await getContent(iID,pageNo)
-    res.send(con)
+// Update Course Content-------------------------------
+app.post('/updateCourseContent',async(req,res)=>{
+    const {username,password} = req.session.adminData
+    if(!checkAdmin(username,password)){
+        return res.json({message:'Login with admin Credentials'})
+    }
+
+    const {id,title,content,pageNo,courseID} = req.body
+    const con = await updatecourseContent(id,title,content,pageNo,courseID)
+
+    res.json({message:"success"})
+})
+
+
+// Add service------------------------
+app.post('/addService',async(req,res)=>{
+    const {username,password} = req.session.adminData
+    if(!checkAdmin(username,password)){
+        return res.json({message:'Login with admin Credentials'})
+    }
+
+    const {name,imgurl,description,tabDescrition} = req.body
+    const service = await addService(name,imgurl,description,tabDescrition)
+    res.json({message:"Course Added",service:service})
+})
+
+
+
+// Update Service------------------------------
+app.post('/updateService',async(req,res)=>{
+    const {username,password} = req.session.adminData
+    if(!checkAdmin(username,password)){
+        return res.json({message:'Login with admin Credentials'})
+    }
+
+    const {id,name,imgurl,description,tabDescrition} = req.body
+    const service = await updateService(id,name,imgurl,description,tabDescrition)
+    res.json({message:"Service Updated",service:service})
+})
+
+
+
+
+// Delate Service--------------------------
+app.post('/delateService/:id',async(req,res)=>{
+    const {username,password} = req.session.adminData
+    if(!checkAdmin(username,password)){
+        return res.json({message:'Login with admin Credentials'})
+    }
+    const id = req.params.id
+    const Course = await delateServiceByID(id)
+    if(Course == undefined){
+        return res.json({message:"Service delated successfully"})
+    }
+
 })
 
 
