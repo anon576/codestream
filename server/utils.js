@@ -3,7 +3,7 @@ import dotenv from 'dotenv'
 import fs from 'fs'
 import pdf from 'html-pdf-node'
 import cron from 'node-cron'
-import { getTodaysEnrollledInternship,getInternshipsByID,getUserbyID,getTodaysComplateEnrollledInternship} from './database.js'
+import { getTodaysEnrollledInternship,getInternshipsByID,getUserByID,getTodaysComplateEnrollledInternship} from './database.js'
 dotenv.config()
 
 const admin = process.env.admin
@@ -18,28 +18,29 @@ const adminPassword = process.env.adminPassword
 const transporter = nodemailer.createTransport({
     service:'gmail',
     auth:{
-        user:'codestream63@gmail.com',
-        pass:'tkdcwqrlnkvxxirj',
+        user: process.env.email,
+        pass: process.env.password,
     },
 })
 
 
-export const sendOTPMail = (email ,otp,subject) =>{
+export const sendOTPMail = (email, otp, subject) => {
     const mailOptions = {
-        from : 'codestream63@gmail.com',
-        to:email,
-        subject : subject,
-        text:`Your otp for registration is : ${otp}`
-    }
+        from: 'codestream63@gmail.com',
+        to: email,
+        subject: subject,
+        text: `Your OTP for registration is: ${otp}`,
+    };
 
-    transporter.sendMail(mailOptions,(error,info)=>{
-        if(error){
-            console.error("error",error)
-        }else{
-            console.log("email sent",info.response)
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error("Error sending email:", error);
+        } else {
+            console.log("Email sent:", info.response);
         }
-    })
-}
+    });
+};
+
 
 
 export const generateOTP = () => {
@@ -76,7 +77,7 @@ cron.schedule('0 3 * * *', async () => {
         }
         for (const r of receiver) {
             console.log(22);
-            const user = await getUserbyID(r.userID);
+            const user = await getUserByID(r.userID);
             const internship = await getInternshipsByID(r.internshipsID);
             console.log("4");
             sendCertificate(user.email, user.name, r.internshipsID, internship.name,1);
@@ -94,7 +95,7 @@ cron.schedule('0 4 * * *', async () => {
             return 0;
         }
         for (const r of receiver) {
-            const user = await getUserbyID(r.userID);
+            const user = await getUserByID(r.userID);
             const internship = await getInternshipsByID(r.internshipsID);
             sendCertificate(user.email, user.name, r.internshipsID, internship.name,0);
         }
