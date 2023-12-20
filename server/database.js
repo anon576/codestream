@@ -120,6 +120,7 @@ export async function getContent(iID,pageNo){
 
 
 
+
 //-----------------Read Internships -----------------------
 
 
@@ -140,8 +141,30 @@ export async function getInternshipsByID(id){
 
 
 
+//-----------------Read Content -----------------------
 
-//------------------------For Mailing Certificate----------------------
+
+// Get All Content
+export async function getAllcourse(){
+    const [course] = await pool.query('select * from courses')
+    return course
+}
+
+
+// Get Specific Internship
+export async function getCourseByID(id){
+    const [course] = await pool.query('select * from courses where courseID = ?',[id])
+    return course[0]
+}
+
+
+
+
+
+
+
+
+//---------------------For Mailing Certificate------------------
 
 // For offer letter
 export async function getTodaysEnrollledInternship(){
@@ -227,9 +250,30 @@ export async function updatecourseContent(id,title,content,pageNo,courseID){
 }
 
 
-//--------------Course Erollment Not Required --------------
+//Read Course Content
+export async function getCourseContent(cID,pageNo){
+    const [con] = await pool.query(`select * from courseContent where courseID=? and pageNo=?`,[cID,pageNo])
+
+    return con[0]
+}
+
+//------------Course Erollment Not Required --------------
+
+export async function enrolledCourse(courseID,userID,progress,complateLetter,complateDate){
+    const [enrollment] = await pool.query(`insert into enrolledCourse(courseID, userID,progress,complateLetter,complateDate) values(?,?,?,?,?)`,[courseID,userID,progress,complateLetter,complateDate])
+
+    return enrollment.insertId
+}
 
 
+//Update Progress
+export async function updateCourseProgress(pageNo,userID,iID){
+    const [progress] = await pool.query(`update enrolledCourse
+    set progress = ?
+    where userID = ? and courseID = ?`,[pageNo,userID,iID])
+
+    return {"message":'Progress Updated Successfully'}
+}
 
 //--------------Admin Service---------------------
 
@@ -256,5 +300,26 @@ export async function updateService(id,name,imgurl,description,tabDescrition){
 //Delate Service----------------------------
 export async function delateServiceByID(id){
     const [service] =await pool.query(`delete from service where serviceID  = ?`,[id])
+    return service[0]
+}
+
+//Apply Service-------------------------------
+export async function applyService(email,mobile,serviceType,projectDescription,contactTime,budget,comment,howyouknowus,tech,projectDeadline,id){
+    const [service] =await pool.query(`insert into serviceApply(email,mobile,serviceType,projectDescription,conctactTime,budget,comment,howyouknowus,tech,projectDeadline,serviceID) values(?,?,?,?,?,?,?,?,?,?,?)`,[email,mobile,serviceType,projectDescription,contactTime,budget,comment,howyouknowus,tech,projectDeadline,id])
+
+    return service.insertId
+}
+
+
+export async function getAllService(){
+    const [service] = await pool.query(`select * from service`)
+
+    return service[0]
+}
+
+
+export async function getServiceByID(id){
+    const [service] = await pool.query(`select * from service where serviceID = ?`,[id])
+
     return service[0]
 }

@@ -3,7 +3,7 @@ import bodyparser from 'body-parser'
 import session from 'express-session'
 
 
-import {checkUserExist,registerUser,getUserbyID,loginUser,updatePassword,addInternship,updateInternship,getAllInternships,getInternshipsByID,delateInternshipByID,enrolledInternship,addContent,updateInternshipContent,getContent, updateProgress,addCourse,updateCourse,delateCourseByID,addCourseContent,updatecourseContent,updateUserData,addService, updateService,delateServiceByID} from './database.js'
+import {checkUserExist,registerUser,getUserbyID,loginUser,updatePassword,addInternship,updateInternship,getAllInternships,getInternshipsByID,delateInternshipByID,enrolledInternship,addContent,updateInternshipContent,getContent, updateProgress,addCourse,updateCourse,delateCourseByID,addCourseContent,updatecourseContent,updateUserData,addService, updateService,delateServiceByID, enrolledCourse,updateCourseProgress,getCourseContent,getAllcourse,getCourseByID,applyService,getAllService,getServiceByID} from './database.js'
 import { sendOTPMail,generateOTP,checkAdmin } from './utils.js'
 
 // const PORT = PRE
@@ -40,6 +40,35 @@ app.get("/internships/:id",async(req,res)=>{
 })
 
 
+// Get all Courses
+app.get("/courses",async(req,res)=>{
+    const course = await getAllcourse()
+    res.send(course)
+})
+
+app.get("/course/:id",async(req,res)=>{
+    const id = req.params.id
+    const course = await getCourseByID(id)
+    res.send(course)
+})
+
+
+// Get All Service
+app.get("/services",async(req,res)=>{
+    const service = await getAllService()
+    res.send(service)
+})
+
+
+app.get("/service/:id",async(req,res)=>{
+    const id = req.params.id
+    const service = await getServiceByID(id)
+    res.send(service)
+})
+
+
+
+
 // Enrolling In Intenrhsip-------------
 app.post('/enrolledInternship',async(req,res)=>{
     const {internshipID} = req.body
@@ -54,11 +83,36 @@ app.post('/enrolledInternship',async(req,res)=>{
     res.json({message:"success",enrollmentID:enrollment})
 })
 
+// Enrolling In Course-------------
+app.post('/enrolledCourse',async(req,res)=>{
+    const {courseID} = req.body
+    const userID = req.session.userData.userID
+    const progress = 0
+    const complateLetter = false
+    const complateDate = new Date()
+    complateDate.setDate(complateDate.getDate() + 30)
+    const formattedComplateDate = complateDate.toISOString().split('T')[0]
+    const enrollment = await enrolledCourse(courseID,userID,progress,complateLetter,formattedComplateDate)
+    res.json({message:"success",enrollmentID:enrollment})
+})
 
 
 
 
-// -------------------User Route------------------------------
+// Apply Service--------------------------
+app.post('/applyService',async(req,res)=>{
+    const {email,mobile,serviceType,projectDescription,contactTime,budget,comment,howyouknowus,tech,projectDeadline,id} = req.body
+    const service = await applyService(email,mobile,serviceType,projectDescription,contactTime,budget,comment,howyouknowus,tech,projectDeadline,id)
+
+    res.json({message:"success",service:service})
+    
+
+})
+
+
+
+
+// -------------------User Route-------------------------
 
 
 // Register user----------------------------
@@ -149,7 +203,19 @@ app.post('/verifyForgetOTP',async(req,res)=>{
 })
 
 
-// Get Internship Content
+// Get Course Content
+app.get("/courseContent/:cID/:pageNo",async(req,res)=>{
+    const {userID} = req.session.userData
+    const cID = req.params.cID
+    const pageNo = req.params.pageNo
+    const progress = await updateCourseProgress(pageNo,userID,cID)
+    const con = await getCourseContent(cID,pageNo)
+    console.log(con)
+    res.send({'content':con,'progress':progress})
+})
+
+
+// Get Internshp Content
 app.get("/content/:iID/:pageNo",async(req,res)=>{
     const {userID} = req.session.userData
     const iID = req.params.iID
@@ -158,6 +224,9 @@ app.get("/content/:iID/:pageNo",async(req,res)=>{
     const con = await getContent(iID,pageNo)
     res.send({'content':con,'progress':progress})
 })
+
+
+
 
 
 // ----------------------Admin Routes---------------------
@@ -359,6 +428,8 @@ app.post('/delateService/:id',async(req,res)=>{
     }
 
 })
+
+
 
 
 app.listen(8080,()=>{
