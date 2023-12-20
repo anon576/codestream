@@ -4,7 +4,7 @@ import session from 'express-session'
 import NodeCache from "node-cache";
 
 
-import {checkUserExist,registerUser,authenticateUser,updatePassword,addInternship,updateInternship,getAllInternships,getInternshipsByID,deleteInternshipByID,enrolledInternship,addContent,updateInternshipContent,getContent, updateProgress,addCourse,updateCourse,deleteCourseByID,addCourseContent,updatecourseContent,updateUserData,addService, updateService,deleteServiceByID, enrolledCourse,updateCourseProgress,getCourseContent,getAllcourse,getCourseByID,applyService,getAllService,getServiceByID} from './database.js'
+import {checkUserExist,registerUser,authenticateUser,updatePassword,addInternship,updateInternship,getAllInternships,getInternshipsByID,deleteInternshipByID,enrolledInternship,addContent,updateInternshipContent,getContent, updateProgress,addCourse,updateCourse,deleteCourseByID,addCourseContent,updatecourseContent,updateUserData,addService, updateService,deleteServiceByID, enrolledCourse,updateCourseProgress,getCourseContent,getAllCourses,getCourseByID,applyService,getAllServices,getServiceByID} from './database.js'
 import { sendOTPMail,generateOTP,checkAdmin } from './utils.js'
 
 // const PORT = PRE

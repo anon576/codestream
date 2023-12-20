@@ -276,7 +276,7 @@ export async function getInternshipsByID(id) {
 
 
 // Get All Content
-export async function getAllcourse() {
+export async function getAllCourses() {
     try {
         const [course] = await pool.query('SELECT * FROM courses');
         return course;
@@ -597,7 +597,7 @@ export async function applyService(email, mobile, serviceType, projectDescriptio
 
 
 
-export async function getAllService() {
+export async function getAllServices() {
     try {
         const [service] = await pool.query('SELECT * FROM service');
         return service; // Return the entire array of services
