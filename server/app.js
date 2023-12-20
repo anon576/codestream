@@ -1,6 +1,7 @@
 import express from  'express'
 import bodyparser from 'body-parser'
 import session from 'express-session'
+import NodeCache from "node-cache";
 
 
 import {checkUserExist,registerUser,authenticateUser,updatePassword,addInternship,updateInternship,getAllInternships,getInternshipsByID,deleteInternshipByID,enrolledInternship,addContent,updateInternshipContent,getContent, updateProgress,addCourse,updateCourse,deleteCourseByID,addCourseContent,updatecourseContent,updateUserData,addService, updateService,deleteServiceByID, enrolledCourse,updateCourseProgress,getCourseContent,getAllcourse,getCourseByID,applyService,getAllService,getServiceByID} from './database.js'
@@ -19,6 +20,7 @@ app.use(
     })
 )
 
+const cache = new NodeCache({ stdTTL: 600, checkperiod: 120 });
 
 
 
@@ -27,87 +29,193 @@ app.use(
 
 
 // Get all Internship-----------------
-app.get("/internships",async(req,res)=>{
-    const internships = await getAllInternships()
-    res.send(internships)
-})
+app.get("/internships", async (req, res) => {
+    try {
+      const cachedInternships = cache.get("internships");
+      if (cachedInternships) {
+        return res.send(cachedInternships);
+      }
+  
+      const internships = await getAllInternships();
+      cache.set("internships", internships);
+      res.send(internships);
+    } catch (error) {
+      console.error("Error fetching internships:", error);
+      res.status(500).send("Internal Server Error");
+    }
+  });
 
 
-app.get("/internships/:id",async(req,res)=>{
-    const id = req.params.id
-    const internship = await getInternshipsByID(id)
-    res.send(internship)
-})
+app.get("/internships/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+  
+      // Check the cache first
+      const cachedInternship = cache.get(`internship_${id}`);
+      if (cachedInternship) {
+        return res.send(cachedInternship);
+      }
+  
+      const internship = await getInternshipByID(id);
+  
+      // Cache the result
+      if (internship) {
+        cache.set(`internship_${id}`, internship);
+      }
+  
+      res.send(internship || {});
+    } catch (error) {
+      console.error("Error fetching internship by ID:", error);
+      res.status(500).send("Internal Server Error");
+    }
+  });
 
 
 // Get all Courses
-app.get("/courses",async(req,res)=>{
-    const course = await getAllcourse()
-    res.send(course)
-})
+app.get("/courses", async (req, res) => {
+    try {
+      const courses = await getAllCourses();
+      res.send(courses);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      res.status(500).send("Internal Server Error");
+    }
+  });
 
-app.get("/course/:id",async(req,res)=>{
-    const id = req.params.id
-    const course = await getCourseByID(id)
-    res.send(course)
-})
+
+
+app.get("/course/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      const course = await getCourseByID(id);
+  
+      if (!course) {
+        return res.status(404).send("Course not found");
+      }
+  
+      res.send(course);
+    } catch (error) {
+      console.error("Error fetching course by ID:", error);
+      res.status(500).send("Internal Server Error");
+    }
+  });
 
 
 // Get All Service
-app.get("/services",async(req,res)=>{
-    const service = await getAllService()
-    res.send(service)
-})
+app.get("/services", async (req, res) => {
+    try {
+      const services = await getAllServices();
+      res.send(services);
+    } catch (error) {
+      console.error("Error fetching services:", error);
+      res.status(500).send("Internal Server Error");
+    }
+  });
 
 
-app.get("/service/:id",async(req,res)=>{
-    const id = req.params.id
-    const service = await getServiceByID(id)
-    res.send(service)
-})
+  app.get("/service/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      const service = await getServiceByID(id);
+  
+      if (!service) {
+        return res.status(404).send("Service not found");
+      }
+  
+      res.send(service);
+    } catch (error) {
+      console.error("Error fetching service by ID:", error);
+      res.status(500).send("Internal Server Error");
+    }
+  });
 
 
 
 
 // Enrolling In Intenrhsip-------------
-app.post('/enrolledInternship',async(req,res)=>{
-    const {internshipID} = req.body
-    const userID = req.session.userData.userID
-    const progress = 0
-    const offerLetter = false
-    const complateLetter = false
-    const complateDate = new Date()
-    complateDate.setDate(complateDate.getDate() + 30)
-    const formattedComplateDate = complateDate.toISOString().split('T')[0]
-    const enrollment = await enrolledInternship(internshipID,userID,progress,offerLetter,complateLetter,formattedComplateDate)
-    res.json({message:"success",enrollmentID:enrollment})
-})
+app.post('/enrolledInternship', async (req, res) => {
+  try {
+    const { internshipID } = req.body;
+    const userID = req.session.userData.userID;
+    const progress = 0;
+    const offerLetter = false;
+    const completeLetter = false;
+    
+    const completeDate = new Date();
+    completeDate.setDate(completeDate.getDate() + 30);
+    const formattedCompleteDate = completeDate.toISOString().split('T')[0];
+
+    const enrollment = await enrolledInternship(internshipID, userID, progress, offerLetter, completeLetter, formattedCompleteDate);
+
+    res.json({ message: "success", enrollmentID: enrollment });
+  } catch (error) {
+    console.error("Error enrolling in internship:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 
 // Enrolling In Course-------------
-app.post('/enrolledCourse',async(req,res)=>{
-    const {courseID} = req.body
-    const userID = req.session.userData.userID
-    const progress = 0
-    const complateLetter = false
-    const complateDate = new Date()
-    complateDate.setDate(complateDate.getDate() + 30)
-    const formattedComplateDate = complateDate.toISOString().split('T')[0]
-    const enrollment = await enrolledCourse(courseID,userID,progress,complateLetter,formattedComplateDate)
-    res.json({message:"success",enrollmentID:enrollment})
-})
+app.post('/enrolledCourse', async (req, res) => {
+    try {
+      const { courseID } = req.body;
+      const userID = req.session.userData.userID;
+      const progress = 0;
+      const completeLetter = false;
+  
+      const completeDate = new Date();
+      completeDate.setDate(completeDate.getDate() + 30);
+      const formattedCompleteDate = completeDate.toISOString().split('T')[0];
+  
+      const enrollment = await enrolledCourse(courseID, userID, progress, completeLetter, formattedCompleteDate);
+  
+      res.json({ message: "success", enrollmentID: enrollment });
+    } catch (error) {
+      console.error("Error enrolling in course:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
 
 
 
 
 // Apply Service--------------------------
-app.post('/applyService',async(req,res)=>{
-    const {email,mobile,serviceType,projectDescription,contactTime,budget,comment,howyouknowus,tech,projectDeadline,id} = req.body
-    const service = await applyService(email,mobile,serviceType,projectDescription,contactTime,budget,comment,howyouknowus,tech,projectDeadline,id)
-
-    res.json({message:"success",service:service})
-    
-
-})
+app.post('/applyService', async (req, res) => {
+    try {
+      const {
+        email,
+        mobile,
+        serviceType,
+        projectDescription,
+        contactTime,
+        budget,
+        comment,
+        howyouknowus,
+        tech,
+        projectDeadline,
+        id
+      } = req.body;
+  
+      const service = await applyService(
+        email,
+        mobile,
+        serviceType,
+        projectDescription,
+        contactTime,
+        budget,
+        comment,
+        howyouknowus,
+        tech,
+        projectDeadline,
+        id
+      );
+  
+      res.json({ message: "success", service: service });
+    } catch (error) {
+      console.error("Error applying for service:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
 
 
 

@@ -16,6 +16,7 @@
     "express-session": "^1.17.3",
     "html-pdf-node": "^1.0.8",
     "mysql2": "^3.6.5",
+    "node-cache": "^5.1.2",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.7",
     "nodemon": "^3.0.2"
