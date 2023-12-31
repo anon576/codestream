@@ -1,0 +1,19 @@
+.projects{
+    width: 100%;
+    /* background-color: var(--home-services-background); */
+    background-color: #9db4c0;
+}
+
+.project-container{
+    width: 80%;
+    margin-left: 10%;
+    padding: 50px 0;
+}
+
+.projects .project-heading{
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 40px;
+}
+
+/* ==============================remaining css is in the homepage.css====================== */

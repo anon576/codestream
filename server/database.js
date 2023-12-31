@@ -1,18 +1,24 @@
 import mysql from 'mysql2'
 import dotenv from 'dotenv'
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 dotenv.config()
 
-
-
 const pool = mysql.createPool({
-    host : process.env.HOST,
-    user:process.env.DBUSER,
-    password:process.env.DBPASS,
-    database:process.env.DATABASE
+    host: process.env.HOST,
+    user: process.env.DBUSER,
+    password: process.env.DBPASS,
+    database: process.env.DATABASE
 }).promise()
 
-
+pool.getConnection()
+    .then((connection) => {
+        console.log('Database connected!');
+        connection.release(); // Release the connection back to the pool
+    })
+    .catch((error) => {
+        console.error('Error connecting to the database:', error.message);
+    });
 
 // --------------User Database-----------------
 
@@ -25,6 +31,77 @@ export async function getUserByID(id) {
         throw error;
     }
 }
+
+
+// const verifyToken = (req, res, next) => {
+//     const token = req.header('Authorization');
+
+//     if (!token) {
+//         return res.status(401).json({ message: 'Unauthorized' });
+//     }
+
+//     try {
+//         const decoded = jwt.verify(token, 'secretKey'); // Replace with your actual secret key
+//         req.user = decoded.user;
+//         next();
+//     } catch (error) {
+//         console.error('Error verifying token:', error);
+//         res.status(401).json({ message: 'Unauthorized' });
+//     }
+// };
+
+// export { verifyToken };
+
+
+const verifyToken = (req, res, next) => {
+
+    const authHeader = req.headers.authorization;
+
+    const token = authHeader.split(' ')[1]
+
+    // console.log(token)
+
+    if (!token) {
+        return res.status(401).json({ message: 'Unauthorized: No token provided' });
+    }
+
+    // jwt.verify(token, 'yourSecretKey', (err, decoded) => {
+    jwt.verify(token, 'yourSecretKey', (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+        }
+
+        console.log('Decoded Token Payload:', decoded);
+
+        req.user = decoded; // Set user data in the request object
+        next();
+    });
+};
+
+export { verifyToken };
+
+// const verifyToken = async (token) => {
+//     console.log(token);
+
+//     if (!token) {
+//         throw { status: 401, message: 'Unauthorized: No token provided' };
+//     }
+
+//     try {
+//         const decoded = await jwt.verify(token, 'yourSecretKey');
+//         console.log('Decoded Token Payload:', decoded);
+
+//         if (decoded && decoded.userId) {
+//             return decoded.userId;
+//         } else {
+//             throw { status: 401, message: 'Unauthorized: Invalid token payload' };
+//         }
+//     } catch (err) {
+//         throw { status: 401, message: 'Unauthorized: Invalid token' };
+//     }
+// };
+
+// export { verifyToken };
 
 
 export async function deleteUserByID(id) {
@@ -45,7 +122,15 @@ export async function deleteUserByID(id) {
 
 export async function checkUserExist(email) {
     try {
+
+        const isVerified = await checkVerified(email);
+
+        if (!isVerified) {
+            return { error: 'User not registered' };
+        }
+
         const [user] = await pool.query('SELECT email FROM users WHERE email = ?', [email]);
+
         return user[0] !== undefined;
     } catch (error) {
         console.error('Error checking user existence:', error);
@@ -53,13 +138,27 @@ export async function checkUserExist(email) {
     }
 }
 
+export async function saveForgetPasswordOtp(email, otp) {
+    try {
+        // Insert forget password otp 
+        const [user] = await pool.query(`UPDATE users SET otp = ${otp} WHERE email = ?`, [email]);
+        const userId = user.insertId;
 
-export async function registerUser(name, email, password) {
+        // Retrieve and return the user by ID
+        return getUserByID(userId);
+    } catch (error) {
+        console.error('Error inserting forget password otp:', error);
+        throw error;
+    }
+}
+
+
+export async function registerUser(name, email, password, otp) {
     try {
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
         // Insert new user with hashed password
-        const [user] = await pool.query('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', [name, email, hashedPassword]);
+        const [user] = await pool.query('INSERT INTO users (name, email, password, otp) VALUES (?, ?, ?, ?)', [name, email, hashedPassword, otp]);
         const userId = user.insertId;
 
         // Retrieve and return the user by ID
@@ -70,18 +169,98 @@ export async function registerUser(name, email, password) {
     }
 }
 
-
-export async function updateUserData(id, name, email, password, college, address, dob, mobile) {
+export async function checkOtp(email) {
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const [result] = await pool.query('SELECT otp FROM users WHERE email = ?', [email]);
+
+        if (result.length === 0) {
+            return null; // OTP not found
+        } else {
+            return result[0].otp;
+        }
+    } catch (error) {
+        console.error('Error in verifyOtp function:', error);
+        throw error;
+    }
+}
+
+export async function deleteOtp(otp) {
+    try {
+
+        const [result] = await pool.query('UPDATE users SET otp = NULL WHERE otp = ?', [otp]);
+
+
+    } catch (error) {
+        console.error('Error in verifyOtp function:', error);
+        throw error;
+    }
+}
+
+export async function setVerify(email) {
+    try {
+        const [result] = await pool.query('UPDATE users SET verify = "True" WHERE email = ?', [email]);
+
+    } catch (error) {
+        console.error('Error in updating to verify function:', error);
+        throw error;
+    }
+}
+
+export async function checkVerified(email) {
+    try {
+        const [result] = await pool.query('SELECT verify FROM users WHERE email = ?', [email]);
+
+        // Check if the result exists and if the 'verify' field is truthy (e.g., not null or undefined)
+        return result.length > 0 && result[0].verify;
+
+    } catch (error) {
+        console.error('Error in checkVerified function:', error);
+        throw error;
+    }
+}
+
+
+export async function deleteUnverified(email) {
+    try {
+
+        const [result] = await pool.query('DELETE FROM users WHERE email = ?', [email]);
+
+    } catch (error) {
+        console.error('Error in deleteUnverified function:', error);
+        throw error;
+    }
+}
+
+
+// export async function updateUserData(id, name, email, college, address, dob, mobile) {
+//     try {
+//         // const hashedPassword = await bcrypt.hash(password, 10);
+//         await pool.query(
+//             `UPDATE users SET name=?, email=?, college=?, address=?, dob=?, mobile=? WHERE userID = ?`,
+//             [name, email, college, address, dob, mobile, id]
+//         );
+
+//         // Return the updated user data
+//         const updatedUser = await getUserByID(id);
+//         return { message: "User Data Updated Successfully", user: updatedUser };
+//     } catch (error) {
+//         console.error('Error updating user data:', error);
+//         throw error;
+//     }
+// }
+
+
+export async function updateUserData(id, name, college, address, dob, mobile) {
+    try {
+        // const hashedPassword = await bcrypt.hash(password, 10);
         await pool.query(
-            `UPDATE users SET name=?, email=?, password=?, college=?, address=?, dob=?, mobile=? WHERE userID = ?`,
-            [name, email, hashedPassword, college, address, dob, mobile, id]
+            `UPDATE users SET name=?, college=?, address=?, dob=?, mobile=? WHERE userID = ?`,
+            [name, college, address, dob, mobile, id]
         );
 
         // Return the updated user data
         const updatedUser = await getUserByID(id);
-        return { message: "User Data Updated Successfully", user: updatedUser };
+        return { success: true, message: "User Data Updated Successfully", user: updatedUser };
     } catch (error) {
         console.error('Error updating user data:', error);
         throw error;
@@ -89,23 +268,43 @@ export async function updateUserData(id, name, email, password, college, address
 }
 
 
-  
 
-// login Function
+function generateAuthToken(userId) {
+    const secretKey = 'yourSecretKey'; // Replace with your actual secret key
+    return jwt.sign({ userId }, secretKey, { expiresIn: '365d' }); // Adjust the expiration time as needed
+}
+
 export async function authenticateUser(email, password) {
     try {
+        const isVerified = await checkVerified(email);
+
         const [user] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-        if (user[0] === undefined || !await bcrypt.compare(password, user[0].password)) {
-            return false;
+
+        if (!user[0]) {
+            return { error: 'User not registered' };
+        }
+
+        if (!isVerified) {
+            return { error: 'User not registered' };
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user[0].password);
+
+        if (!passwordMatch) {
+            return { error: 'Incorrect password' };
         }
 
         const userId = user[0].userID;
-        return getUserByID(userId);
+        const token = generateAuthToken(userId);
+
+        return { user: getUserByID(userId), token };
     } catch (error) {
         console.error('Error logging in user:', error);
         throw error;
     }
 }
+
+
 // Forgot Password
 export async function updatePassword(email, newPassword) {
     try {
@@ -545,7 +744,7 @@ export async function addService(name, imgurl, description, tabDescrition) {
     }
 }
 
-  
+
 
 
 //Update service------------------------------------
@@ -579,14 +778,14 @@ export async function deleteServiceByID(id) {
 
 
 //Apply Service-------------------------------
-export async function applyService(email, mobile, serviceType, projectDescription, contactTime, budget, comment, howyouknowus, tech, projectDeadline, id) {
+export async function applyService(email, mobile, serviceType, projectDescription, contactTime, budget, howyouknowus, projectDeadline, contactStyle, userid, serviceid) {
     try {
         const [service] = await pool.query(`
             INSERT INTO serviceApply(
-                email, mobile, serviceType, projectDescription, conctactTime, budget, comment, howyouknowus, tech, projectDeadline, serviceID
+                email, mobile, serviceType, projectDescription, contactTime, budget, howyouknowus, projectDeadline,contactStyle, userID, serviceID
             ) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [email, mobile, serviceType, projectDescription, contactTime, budget, comment, howyouknowus, tech, projectDeadline, id]);
+        `, [email, mobile, serviceType, projectDescription, contactTime, budget, howyouknowus, projectDeadline, contactStyle, userid, serviceid]);
 
         return service.insertId;
     } catch (error) {
@@ -595,6 +794,17 @@ export async function applyService(email, mobile, serviceType, projectDescriptio
     }
 }
 
+
+export async function getAppliedServiceDataById(userid) {
+    try {
+        const [serviceData] = await pool.query('SELECT * FROM serviceApply WHERE userID = ?', [userid]);
+
+        return serviceData;
+    } catch (error) {
+        console.error('Error getting Applied serviceData:', error);
+        throw error; // Rethrow the error to be handled by the caller
+    }
+}
 
 
 export async function getAllServices() {

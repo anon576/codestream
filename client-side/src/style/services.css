@@ -1,0 +1,231 @@
+.services {
+    /* background-color: rgba(145, 130, 74, 0.277); */
+    background-color: white;
+    margin-top: 80px;
+    padding-top: 20px;
+}
+
+.services-container {
+    width: 100%;
+    /* margin-left: 20%; */
+}
+
+.services .services-sub-container {
+    width: 70%;
+    margin-left: 15%;
+}
+
+.services-cards {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    box-shadow: 0px 0px 10px gray;
+}
+
+.services-img {
+    max-width: 20rem;
+}
+
+.services .services-img img {
+    width: 100%;
+}
+
+.services .services-content {
+    flex-basis: 70%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+}
+
+.services-sub-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding-bottom: 40px;
+}
+
+/* 
+.services .services-content p {
+    line-height: 25px;
+} */
+
+.services .services-content button {
+    width: 150px;
+    cursor: pointer;
+    transition: box-shadow 0.1s ease-in, transform 0.1s ease-in;
+}
+
+.services .services-content button:hover {
+    box-shadow: 4px 4px 0px gray;
+}
+
+.services .services-content button:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0;
+}
+
+@media(max-width:1200px) {
+    .services .services-sub-container {
+        width: 70%;
+        margin-left: 15%;
+    }
+}
+
+@media(max-width:1000px) {
+
+    .services .services-sub-container {
+        width: 80%;
+        margin-left: 10%;
+
+    }
+
+}
+
+@media(max-width:800px) {
+
+    .services-sub-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .services-img {
+        max-width: 25rem;
+    }
+
+    .services-cards {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 25rem;
+    }
+
+    .services .services-container .services-content {
+        gap: 1rem;
+    }
+
+}
+
+@media(max-width:400px) {
+
+    .services .services-sub-container {
+        width: 90%;
+        margin-left: 5%;
+    }
+}
+
+
+.services .services-sub2-container {
+    width: 100%;
+    background-color: var(--home-services-background);
+}
+
+.services .courses-intership-services {
+    width: 70%;
+    margin-left: 15%;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 20px;
+}
+
+.services .courses-intership-services h1 {
+    text-align: center;
+    padding: 40px 0 20px 0;
+    font-size: 2.5rem;
+}
+
+.services .courses-intership-services button {
+    width: 200px;
+}
+
+@media(max-width:1000px) {
+
+    .services-sub2-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .services .courses-intership-services {
+        width: 90%;
+        /* margin: 0 5%; */
+        margin-left: 5%;
+        margin-right: 5%;
+        align-items: center;
+    }
+
+}
+
+/* ==================review-css================================ */
+.services-review {
+    background-color: var(--review-background-color);
+}
+
+.services-review .review-header h1 {
+    margin-bottom: 1rem;
+}
+
+.services-review .services-review-container {
+    width: 70%;
+    margin-left: 15%;
+    padding: 50px 0;
+}
+
+.services-review .services-review-cards {
+    padding: 50px 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.services-review-cards .review-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    /* background-color: rgba(128, 128, 128, 0.744); */
+    background-color: #9db4c0;
+    box-shadow: 2px 2px 10px gray, 2px 2px 10px gray;
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 30rem;
+}
+
+.services-review-cards .review-card .name {
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+@media(max-width:1100px) {
+    .services-review .services-review-container {
+        width: 80%;
+        margin-left: 10%;
+    }
+}
+
+@media(max-width:900px) {
+    .services-review .services-review-container {
+        width: 70%;
+        margin-left: 15%;
+    }
+
+    .services-review .services-review-cards {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .services-review-cards .review-card {
+        max-width: 100%;
+    }
+}
+
+@media(max-width:500px) {
+    .services-review .services-review-container {
+        width: 90%;
+        margin-left: 5%;
+    }
+
+}
+
+/* ==================review-css================================ */

@@ -1,27 +1,35 @@
-import express from  'express'
+import express from 'express'
 import bodyparser from 'body-parser'
 import session from 'express-session'
 import NodeCache from "node-cache";
+import cors from "cors";
+// import jwt from 'jsonwebtoken';
+// import MemoryStoreFactory from 'memorystore';
 
 
-import {checkUserExist,registerUser,authenticateUser,updatePassword,addInternship,updateInternship,getAllInternships,getInternshipsByID,deleteInternshipByID,enrolledInternship,addContent,updateInternshipContent,getContent, updateProgress,addCourse,updateCourse,deleteCourseByID,addCourseContent,updatecourseContent,updateUserData,addService, updateService,deleteServiceByID, enrolledCourse,updateCourseProgress,getCourseContent,getAllCourses,getCourseByID,applyService,getAllServices,getServiceByID} from './database.js'
-import { sendOTPMail,generateOTP,checkAdmin } from './utils.js'
-
-// const PORT = PRE
+import { checkUserExist, registerUser, authenticateUser, updatePassword, addInternship, updateInternship, getAllInternships, getInternshipsByID, deleteInternshipByID, enrolledInternship, addContent, updateInternshipContent, getContent, updateProgress, addCourse, updateCourse, deleteCourseByID, addCourseContent, updatecourseContent, updateUserData, addService, updateService, deleteServiceByID, enrolledCourse, updateCourseProgress, getCourseContent, getAllCourses, getCourseByID, applyService, getAllServices, getServiceByID, checkOtp, deleteOtp, setVerify, checkVerified, deleteUnverified, saveForgetPasswordOtp, getUserByID, verifyToken, getAppliedServiceDataById } from './database.js'
+import { sendOTPMail, generateOTP, checkAdmin } from './utils.js'
+import { useParams } from 'react-router-dom';
 
 const app = express()
 app.use(bodyparser.json())
-app.use(bodyparser.urlencoded({extended:true}))
+app.use(bodyparser.urlencoded({ extended: true }))
 app.use(
     session({
-        secret:'sskey',
-        resave:false,
-        saveUninitialized:true,
+        secret: 'sskey',
+        resave: false,
+        saveUninitialized: true,
     })
 )
 
+
 const cache = new NodeCache({ stdTTL: 600, checkperiod: 120 });
 
+// app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000', // Replace with your React app's URL
+    credentials: true,
+}));
 
 
 //------------Home Page Router----------------------
@@ -31,150 +39,150 @@ const cache = new NodeCache({ stdTTL: 600, checkperiod: 120 });
 // Get all Internship-----------------
 app.get("/internships", async (req, res) => {
     try {
-      const cachedInternships = cache.get("internships");
-      if (cachedInternships) {
-        return res.send(cachedInternships);
-      }
-  
-      const internships = await getAllInternships();
-      cache.set("internships", internships);
-      res.send(internships);
+        const cachedInternships = cache.get("internships");
+        if (cachedInternships) {
+            return res.send(cachedInternships);
+        }
+
+        const internships = await getAllInternships();
+        cache.set("internships", internships);
+        res.send(internships);
     } catch (error) {
-      console.error("Error fetching internships:", error);
-      res.status(500).send("Internal Server Error");
+        console.error("Error fetching internships:", error);
+        res.status(500).send("Internal Server Error");
     }
-  });
+});
 
 
 app.get("/internships/:id", async (req, res) => {
     try {
-      const id = req.params.id;
-  
-      // Check the cache first
-      const cachedInternship = cache.get(`internship_${id}`);
-      if (cachedInternship) {
-        return res.send(cachedInternship);
-      }
-  
-      const internship = await getInternshipByID(id);
-  
-      // Cache the result
-      if (internship) {
-        cache.set(`internship_${id}`, internship);
-      }
-  
-      res.send(internship || {});
+        const id = req.params.id;
+
+        // Check the cache first
+        const cachedInternship = cache.get(`internship_${id}`);
+        if (cachedInternship) {
+            return res.send(cachedInternship);
+        }
+
+        const internship = await getInternshipByID(id);
+
+        // Cache the result
+        if (internship) {
+            cache.set(`internship_${id}`, internship);
+        }
+
+        res.send(internship || {});
     } catch (error) {
-      console.error("Error fetching internship by ID:", error);
-      res.status(500).send("Internal Server Error");
+        console.error("Error fetching internship by ID:", error);
+        res.status(500).send("Internal Server Error");
     }
-  });
+});
 
 
 // Get all Courses
 app.get("/courses", async (req, res) => {
     try {
-      const courses = await getAllCourses();
-      res.send(courses);
+        const courses = await getAllCourses();
+        res.send(courses);
     } catch (error) {
-      console.error("Error fetching courses:", error);
-      res.status(500).send("Internal Server Error");
+        console.error("Error fetching courses:", error);
+        res.status(500).send("Internal Server Error");
     }
-  });
+});
 
 
 
 app.get("/course/:id", async (req, res) => {
     try {
-      const id = req.params.id;
-      const course = await getCourseByID(id);
-  
-      if (!course) {
-        return res.status(404).send("Course not found");
-      }
-  
-      res.send(course);
+        const id = req.params.id;
+        const course = await getCourseByID(id);
+
+        if (!course) {
+            return res.status(404).send("Course not found");
+        }
+
+        res.send(course);
     } catch (error) {
-      console.error("Error fetching course by ID:", error);
-      res.status(500).send("Internal Server Error");
+        console.error("Error fetching course by ID:", error);
+        res.status(500).send("Internal Server Error");
     }
-  });
+});
 
 
 // Get All Service
 app.get("/services", async (req, res) => {
     try {
-      const services = await getAllServices();
-      res.send(services);
+        const services = await getAllServices();
+        res.send(services);
     } catch (error) {
-      console.error("Error fetching services:", error);
-      res.status(500).send("Internal Server Error");
+        console.error("Error fetching services:", error);
+        res.status(500).send("Internal Server Error");
     }
-  });
+});
 
 
-  app.get("/service/:id", async (req, res) => {
+app.get("/service/:id", async (req, res) => {
     try {
-      const id = req.params.id;
-      const service = await getServiceByID(id);
-  
-      if (!service) {
-        return res.status(404).send("Service not found");
-      }
-  
-      res.send(service);
+        const id = req.params.id;
+        const service = await getServiceByID(id);
+
+        if (!service) {
+            return res.status(404).send("Service not found");
+        }
+
+        res.send(service);
     } catch (error) {
-      console.error("Error fetching service by ID:", error);
-      res.status(500).send("Internal Server Error");
+        console.error("Error fetching service by ID:", error);
+        res.status(500).send("Internal Server Error");
     }
-  });
+});
 
 
 
 
 // Enrolling In Intenrhsip-------------
 app.post('/enrolledInternship', async (req, res) => {
-  try {
-    const { internshipID } = req.body;
-    const userID = req.session.userData.userID;
-    const progress = 0;
-    const offerLetter = false;
-    const completeLetter = false;
-    
-    const completeDate = new Date();
-    completeDate.setDate(completeDate.getDate() + 30);
-    const formattedCompleteDate = completeDate.toISOString().split('T')[0];
+    try {
+        const { internshipID } = req.body;
+        const userID = req.session.userData.userID;
+        const progress = 0;
+        const offerLetter = false;
+        const completeLetter = false;
 
-    const enrollment = await enrolledInternship(internshipID, userID, progress, offerLetter, completeLetter, formattedCompleteDate);
+        const completeDate = new Date();
+        completeDate.setDate(completeDate.getDate() + 30);
+        const formattedCompleteDate = completeDate.toISOString().split('T')[0];
 
-    res.json({ message: "success", enrollmentID: enrollment });
-  } catch (error) {
-    console.error("Error enrolling in internship:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
+        const enrollment = await enrolledInternship(internshipID, userID, progress, offerLetter, completeLetter, formattedCompleteDate);
+
+        res.json({ message: "success", enrollmentID: enrollment });
+    } catch (error) {
+        console.error("Error enrolling in internship:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
 });
 
 
 // Enrolling In Course-------------
 app.post('/enrolledCourse', async (req, res) => {
     try {
-      const { courseID } = req.body;
-      const userID = req.session.userData.userID;
-      const progress = 0;
-      const completeLetter = false;
-  
-      const completeDate = new Date();
-      completeDate.setDate(completeDate.getDate() + 30);
-      const formattedCompleteDate = completeDate.toISOString().split('T')[0];
-  
-      const enrollment = await enrolledCourse(courseID, userID, progress, completeLetter, formattedCompleteDate);
-  
-      res.json({ message: "success", enrollmentID: enrollment });
+        const { courseID } = req.body;
+        const userID = req.session.userData.userID;
+        const progress = 0;
+        const completeLetter = false;
+
+        const completeDate = new Date();
+        completeDate.setDate(completeDate.getDate() + 30);
+        const formattedCompleteDate = completeDate.toISOString().split('T')[0];
+
+        const enrollment = await enrolledCourse(courseID, userID, progress, completeLetter, formattedCompleteDate);
+
+        res.json({ message: "success", enrollmentID: enrollment });
     } catch (error) {
-      console.error("Error enrolling in course:", error);
-      res.status(500).json({ message: "Internal Server Error" });
+        console.error("Error enrolling in course:", error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
-  });
+});
 
 
 
@@ -182,40 +190,59 @@ app.post('/enrolledCourse', async (req, res) => {
 // Apply Service--------------------------
 app.post('/applyService', async (req, res) => {
     try {
-      const {
-        email,
-        mobile,
-        serviceType,
-        projectDescription,
-        contactTime,
-        budget,
-        comment,
-        howyouknowus,
-        tech,
-        projectDeadline,
-        id
-      } = req.body;
-  
-      const service = await applyService(
-        email,
-        mobile,
-        serviceType,
-        projectDescription,
-        contactTime,
-        budget,
-        comment,
-        howyouknowus,
-        tech,
-        projectDeadline,
-        id
-      );
-  
-      res.json({ message: "success", service: service });
+        const {
+            email,
+            mobile,
+            serviceType,
+            projectDescription,
+            contactTime,
+            budget,
+            // comment,
+            howyouknowus,
+            // tech,
+            projectDeadline,
+            contactStyle,
+            userid,
+            serviceid,
+
+        } = req.body;
+
+        const service = await applyService(
+            email,
+            mobile,
+            serviceType,
+            projectDescription,
+            contactTime,
+            budget,
+            // comment,
+            howyouknowus,
+            // tech,
+            projectDeadline,
+            contactStyle,
+            userid,
+            serviceid
+        );
+
+        res.json({ success: true, message: "Submited successfully", service: service });
     } catch (error) {
-      console.error("Error applying for service:", error);
-      res.status(500).json({ message: "Internal Server Error" });
+        console.error("Error applying for service:", error);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-  });
+});
+
+app.get('/getAppliedServiceData/:userid', async (req, res) => {
+    try {
+        const userid = req.params.userid;
+        console.log(userid);
+        const servicedata = await getAppliedServiceDataById(userid);
+        if (servicedata) {
+            res.json({ success: true, servicedata });
+        }
+    } catch (error) {
+        console.log('error getting applied service data', error);
+        res.status(500).json({ success: false, message: 'Internal server Error' });
+    }
+});
 
 
 
@@ -228,20 +255,47 @@ app.post('/register', async (req, res) => {
     try {
         const { name, email, password } = req.body;
         const emailExists = await checkUserExist(email);
+        const isVerified = await checkVerified(email);
+
 
         if (emailExists) {
-            return res.status(400).json({
-                message: 'Email is already registered',
+            if (!isVerified) {
+
+                deleteUnverified(email);
+                const otp = generateOTP();
+                sendOTPMail(email, otp, 'OTP for Registration');
+
+                // req.session.tempdata = { name, email, password, otp };
+                // console.log(req.session.tempdata)
+                console.log(name, email, password, otp)
+                const user = await registerUser(name, email, password, otp);
+                console.log("data stored")
+
+                res.status(200).json({
+                    message: 'OTP sent to your email for verification',
+                });
+
+            } else {
+                return res.status(400).json({
+                    message: 'Email is already registered',
+                });
+            }
+        } else {
+            const otp = generateOTP();
+            sendOTPMail(email, otp, 'OTP for Registration');
+
+            // req.session.tempdata = { name, email, password, otp };
+            // console.log(req.session.tempdata)
+            console.log(name, email, password, otp)
+            const user = await registerUser(name, email, password, otp);
+            console.log("data stored")
+
+            res.status(200).json({
+                message: 'OTP sent to your email for verification',
             });
         }
 
-        const otp = generateOTP();
-        sendOTPMail(email, otp, 'OTP for Registration');
 
-        req.session.tempdata = { name, email, password, otp };
-        res.json({
-            message: 'OTP sent to your email for verification',
-        });
     } catch (error) {
         console.error('Error in registration:', error);
         res.status(500).json({
@@ -250,19 +304,24 @@ app.post('/register', async (req, res) => {
     }
 });
 
-
 app.post('/verifyOTP', async (req, res) => {
     try {
-        const { otp } = req.body;
-        const data = req.session.tempdata;
-        if (!data || data.otp != otp ){
+        const { otp, email } = req.body;
+
+        const savedOtp = await checkOtp(email);
+
+        if (savedOtp === null) {
+            return res.status(401).json({ message: 'OTP not exists' });
+        }
+
+        if (savedOtp !== otp) {
             return res.status(401).json({ message: 'Invalid OTP' });
         }
-        
 
-        const user = await registerUser(data.name, data.email, data.password);
-        req.session.tempdata = null;
-        res.json({ message: 'Registration successful', user });
+
+        await setVerify(email);
+        await deleteOtp(otp);
+        res.status(200).json({ message: 'Registration successful' });
     } catch (error) {
         console.error('Error in OTP verification:', error);
         res.status(500).json({
@@ -272,49 +331,47 @@ app.post('/verifyOTP', async (req, res) => {
 });
 
 
-
-
-//Update User Data----------------------
-app.post('/updateUserData', async (req, res) => {
+app.put('/updateUserData', async (req, res) => {
     try {
-        const { name, email, password, college, address, dob, mobile } = req.body;
-        const id = req.session.userData.userID;
+        const { id, name, college, address, dob, mobile } = req.body;
 
         // Update user data and get the updated user
-        const result = await updateUserData(id, name, email, password, college, address, dob, mobile);
+        const result = await updateUserData(id, name, college, address, dob, mobile);
 
         // Send the updated user data in the response
-        res.json(result);
+        res.json({
+            success: true,
+            message: 'User data updated successfully',
+            userdata: result, // Assuming your updateUserData function returns the updated user data
+        });
     } catch (error) {
         console.error('Error in updating user data:', error);
         res.status(500).json({
+            success: false,
             message: 'Internal Server Error',
         });
     }
 });
 
-
-
-
-// User Login-------------------
 app.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await authenticateUser(email, password);
-        if (!user) {
-            console.error('Authentication failed for email:', email);
-            return res.status(404).json({ message: 'Email or Password is incorrect' });
+        const authResult = await authenticateUser(email, password);
+
+        if (authResult.error) {
+            console.error(`Authentication failed for email ${email}: ${authResult.error}`);
+            return res.status(404).json({ message: authResult.error });
         }
 
+        const { user, token } = authResult;
         req.session.userData = user;
         console.log('User logged in:', user.email);
-        res.json({ message: 'Login successful', user });
+        res.json({ message: 'Login successful', user, token });
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
-
 
 
 
@@ -332,8 +389,8 @@ app.post('/forgetPassword', async (req, res) => {
         }
 
         const otp = generateOTP();
+        const saveOtp = await saveForgetPasswordOtp(email, otp)
         sendOTPMail(email, otp, 'OTP for Resetting Password');
-        req.session.tempdata = { email, otp };
 
         console.log('OTP for password resetting sent to:', email);
         res.json({ message: 'OTP for password resetting is sent to your mail' });
@@ -347,22 +404,24 @@ app.post('/forgetPassword', async (req, res) => {
 
 app.post('/verifyForgetOTP', async (req, res) => {
     try {
-        const { otp, password } = req.body;
-        const data = req.session.tempdata;
+        const { email, otp, password } = req.body;
 
-        if (data.otp != otp) {
+        const savedOtp = await checkOtp(email);
+
+        if (savedOtp === null) {
+            return res.status(401).json({ message: 'OTP not exists' });
+        }
+
+        if (savedOtp !== otp) {
             console.error('Invalid OTP for password reset:', otp);
             return res.status(401).json({
                 message: 'Invalid OTP'
             });
         }
 
-        const user = await updatePassword(data.email, password);
-
-        // Clean up session data after successful password reset
-        req.session.tempdata = null;
-
-        console.log('Password reset successfully for:', data.email);
+        const user = await updatePassword(email, password);
+        await deleteOtp(otp);
+        console.log('Password reset successfully for:', email);
         res.json({
             message: "Password reset successfully",
             user: user
@@ -375,27 +434,47 @@ app.post('/verifyForgetOTP', async (req, res) => {
     }
 });
 
+app.get("/getUserData", verifyToken, async (req, res) => {
+    try {
+
+        const token = req.headers.authorization
+        // console.log(token)
+
+        const userID = req.user.userId;
+        const userdata = await getUserByID(userID);
+        if (userdata) {
+            res.json({ success: true, userdata });
+        } else {
+            res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+    } catch (error) {
+        console.error('Error fetching user profile data:', error);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+})
+
 
 // Get Course Content
-app.get("/courseContent/:cID/:pageNo",async(req,res)=>{
-    const {userID} = req.session.userData
+app.get("/courseContent/:cID/:pageNo", async (req, res) => {
+    const { userID } = req.session.userData
     const cID = req.params.cID
     const pageNo = req.params.pageNo
-    const progress = await updateCourseProgress(pageNo,userID,cID)
-    const con = await getCourseContent(cID,pageNo)
+    const progress = await updateCourseProgress(pageNo, userID, cID)
+    const con = await getCourseContent(cID, pageNo)
     console.log(con)
-    res.send({'content':con,'progress':progress})
+    res.send({ 'content': con, 'progress': progress })
 })
 
 
 // Get Internshp Content
-app.get("/content/:iID/:pageNo",async(req,res)=>{
-    const {userID} = req.session.userData
+app.get("/content/:iID/:pageNo", async (req, res) => {
+    const { userID } = req.session.userData
     const iID = req.params.iID
     const pageNo = req.params.pageNo
-    const progress = await updateProgress(pageNo,userID,iID)
-    const con = await getContent(iID,pageNo)
-    res.send({'content':con,'progress':progress})
+    const progress = await updateProgress(pageNo, userID, iID)
+    const con = await getContent(iID, pageNo)
+    res.send({ 'content': con, 'progress': progress })
 })
 
 
@@ -405,15 +484,15 @@ app.get("/content/:iID/:pageNo",async(req,res)=>{
 // ----------------------Admin Routes---------------------
 
 // Admin Login--------------------------
-app.post('/adminLogin',async(req,res)=>{
-    const {username,password} = req.body
-    if(checkAdmin(username,password)){
-        req.session.adminData = {username,password}
-        res.json({message:'Login Successfull'})
-    }else{
-        res.json({message:'Invalid Credentials'})
+app.post('/adminLogin', async (req, res) => {
+    const { username, password } = req.body
+    if (checkAdmin(username, password)) {
+        req.session.adminData = { username, password }
+        res.json({ message: 'Login Successfull' })
+    } else {
+        res.json({ message: 'Invalid Credentials' })
     }
-    
+
 })
 
 
@@ -802,6 +881,6 @@ app.post('/deleteService/:id', async (req, res) => {
 
 
 
-app.listen(8080,()=>{
+app.listen(8080, () => {
     console.log('http://localhost:8080')
 })

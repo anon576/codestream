@@ -1,0 +1,269 @@
+.apply-service {
+    min-height: calc(100vh - 80px);
+    max-height: fit-content;
+    margin-top: 80px;
+    display: flex;
+    background: linear-gradient(to right,
+            #219ebc 0%,
+            #219ebc 50%,
+            #8ecae6 50%,
+            #8ecae6 100%)
+}
+
+.apply-service-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 10px;
+    gap: 10px;
+}
+
+.service-features {
+    align-self: flex-end;
+    /* border: 1px solid red; */
+    /* padding: 10px; */
+    border-radius: 20px 20px 0 0px;
+    background-color: #006d77;
+    width: 20rem;
+    flex: 25%;
+}
+
+.service-features .service-features-header {
+    align-items: center;
+    padding: 20px;
+    /* margin-bottom: 20px; */
+
+}
+
+.service-features ul {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    background-color: #83c5be;
+    /* border-radius: 40px 40px 0 0px; */
+}
+
+.service-features ul li::before {
+    content: "◉";
+    font-weight: 600;
+    margin-right: 10px;
+    color: var(--slider-text-backgroung-color);
+    color: #2a9d8f;
+}
+
+.apply-service-main-container {
+    display: flex;
+    flex: 25%;
+}
+
+.hidden-service-info {
+    display: none;
+}
+
+
+
+
+
+
+.service-apply-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* flex-grow: 100%; */
+    flex: 30%;
+}
+
+.service-apply-form .service-form {
+    /* width: 30rem; */
+    display: flex;
+    flex-direction: column;
+    background-color: #e5e5e5;
+    padding: 30px;
+    gap: 1rem;
+}
+
+.service-apply-form .service-form input {
+    background-color: #ffffff;
+    width: 100%;
+    color: black;
+    border: 1px solid #006d77;
+}
+
+.service-apply-form .mobile-contact-style {
+    display: flex;
+    gap: 20px;
+}
+
+.service-apply-form .project-description {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 100%;
+    color: black;
+    border: 1px solid #006d77;
+}
+
+.service-apply-form .budget-deadline {
+    display: flex;
+    gap: 20px;
+}
+
+.service-apply-form .contact-style-div {
+    width: 100%;
+    height: 100%;
+    flex: 50%;
+}
+
+.service-form select {
+    width: 100%;
+    padding: 6px;
+}
+
+.service-apply-button {
+    cursor: pointer;
+    padding: 10px 0;
+    transition: box-shadow .2s ease, transform .2s ease;
+}
+
+.service-apply-button:hover {
+    box-shadow: 0px 0px 10px gray;
+}
+
+.service-apply-button:active {
+    /* box-shadow: 0px 0px 10px gray; */
+    transform: scale(.9);
+}
+
+
+.service-apply-info {
+    align-self: flex-start;
+    /* border: 1px solid red; */
+    /* padding: 10px; */
+    background-color: #006d77;
+    border-radius: 0 0 20px 20px;
+    width: 20rem;
+    flex: 25%;
+}
+
+.service-apply-info .service-apply-info-header {
+    align-items: center;
+    padding: 20px;
+    /* margin-bottom: 20px; */
+
+}
+
+.service-apply-info ul {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    background-color: #83c5be;
+    border-radius: 0 0 20px 20px;
+}
+
+.service-apply-info ul li::before {
+    content: "◉";
+    font-weight: 600;
+    margin-right: 10px;
+    color: var(--slider-text-backgroung-color);
+    color: #2a9d8f;
+}
+
+
+@media(max-width:1100px) {
+
+    .service-apply-info {
+        display: none;
+    }
+
+    .hidden-service-info {
+        display: block;
+    }
+
+    .apply-service-main-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        flex: 50%;
+    }
+
+    .service-apply-info {
+        align-self: center;
+    }
+
+    .service-features {
+        align-self: center;
+    }
+
+    .service-apply-form {
+        flex: 50%;
+    }
+
+    .service-apply-info ul {
+        border-radius: 0 0 0px 0px;
+    }
+
+    .service-features {
+        border-radius: 0px 0px 0 0px;
+        /* background-color: transparent; */
+    }
+
+    .service-apply-info {
+        border-radius: 0 0 0px 0px;
+    }
+}
+
+
+@media(max-width:700px) {
+
+    .apply-service-container {
+        display: flex;
+        flex-direction: column-reverse;
+    }
+
+    .apply-service-main-container {
+        display: flex;
+        flex-direction: row;
+        padding: 10px;
+    }
+
+    .service-apply-info {
+        align-self: self-start;
+    }
+
+    .service-features {
+        align-self: self-start;
+    }
+
+    .apply-service-main-container h1 {
+        font-size: 1.5rem;
+    }
+}
+
+@media(max-width:580px) {
+    .apply-service-main-container {
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+        flex: 100%;
+        width: 100%;
+    }
+
+    .service-apply-info {
+        width: 100%;
+    }
+
+    .service-features {
+        width: 100%;
+    }
+
+    .service-apply-info {
+        align-self: center;
+    }
+
+    .service-features {
+        align-self: center;
+    }
+}

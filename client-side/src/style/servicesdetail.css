@@ -1,0 +1,141 @@
+.servicesdetail {
+    margin-top: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px 0;
+}
+
+.servicesdetail-container {
+    width: 70%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* border: 1px solid red; */
+}
+
+.servicesdetail h1 {
+    padding: 0 0 30px 0;
+}
+
+.servicesdetail-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 50px;
+}
+
+.servicesdetail-header h1 {
+    padding: 0;
+}
+
+.apply-button {
+    width: 150px;
+    padding: 0px;
+    height: 50px;
+}
+
+.servicesdetail .servicesdetail-content {
+    padding: 10px 50px;
+}
+
+.servicesdetail-content p {
+    font-size: 1.2rem;
+    line-height: 30px;
+    color: rgb(78, 78, 78);
+}
+
+.servicesdetail-content ul {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.servicesdetail-content ul li p::before {
+    content: "|";
+    transform: rotate(90deg);
+    display: inline-block;
+    margin-right: 10px;
+    color: gray;
+    font-weight: 600;
+}
+
+.servicesdetail-content .keypoints {
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.keypoints li::before {
+    content: "◉";
+    font-weight: 600;
+    margin-right: 10px;
+    color: var(--slider-text-backgroung-color);
+    color: #2a9d8f;
+}
+
+.servicesdetail-container .servicesdetail-image-container img {
+    width: 100%;
+}
+
+.servicesdetail-image-container {
+    width: 38rem;
+}
+
+@media(max-width: 1000px) {
+    .servicesdetail-container {
+        width: 80%;
+    }
+}
+
+@media(max-width: 860px) {
+    .servicesdetail-container {
+        width: 90%;
+    }
+}
+
+@media(max-width: 780px) {
+    .servicesdetail-container {
+        width: 100%;
+    }
+}
+
+@media(max-width: 700px) {
+    .servicesdetail-container .servicesdetail-image-container {
+        width: 30rem;
+    }
+}
+
+@media(max-width: 550px) {
+
+    .servicesdetail-header {
+        padding: 10px 10px;
+    }
+
+    .servicesdetail .servicesdetail-content {
+        padding: 10px 10px;
+    }
+
+    .servicesdetail-container .servicesdetail-image-container {
+        width: 100%;
+    }
+
+    .servicesdetail-content p {
+        font-size: 1rem;
+        line-height: 25px;
+    }
+}
+
+@media(max-width: 420px) {
+
+    .servicesdetail-container h1 {
+        font-size: 2rem;
+    }
+
+    .servicesdetail-container .servicesdetail-header h1 {
+        font-size: 1.5rem;
+    }
+}
