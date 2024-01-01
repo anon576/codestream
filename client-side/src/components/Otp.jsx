@@ -2,7 +2,7 @@ import { React, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import { useLocation, useParams } from 'react-router-dom';
-// import "../style/register.css"
+import "../style/register.css"
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -16,6 +16,8 @@ const Otp = (props) => {
     const location = useLocation();
 
     const email = location.state ? location.state.email : null;
+
+    const [showPasswordInput, setShowPasswordInput] = useState(false)
 
     // const navigate = useNavigate();
 
@@ -47,7 +49,8 @@ const Otp = (props) => {
     console.log(typeof (otptype))
 
     // Use the useState hook to declare state
-    const [showPasswordInput, setShowPasswordInput] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+
 
     // Use useEffect to set the initial value based on otptype
     useEffect(() => {
@@ -112,7 +115,7 @@ const Otp = (props) => {
 
     return (
         <div className='register'>
-            <form action="" className='login-form' onSubmit={handleSubmit(onSubmit)}>
+            <form action="" className='login-form otp-main-form' onSubmit={handleSubmit(onSubmit)}>
                 <h1>OTP Verification</h1>
                 <div className="login-inputs">
                     <div className='otp-form'>
@@ -129,7 +132,7 @@ const Otp = (props) => {
                         {showPasswordInput &&
                             <div>
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : 'password'}
                                     name='password'
                                     placeholder='Enter New password'
                                     {...register("password", {
@@ -145,6 +148,14 @@ const Otp = (props) => {
                                     })}
                                 />
                                 <p>{errors?.password?.message}</p>
+
+                                <div className="password">
+                                    <input type="checkbox" id='showpassword' value={showPassword}
+                                        onChange={() =>
+                                            setShowPassword((prev) => !prev)
+                                        } />
+                                    <label htmlFor="showpassword">Show password</label>
+                                </div>
                             </div>
                         }
                     </div>

@@ -7,7 +7,7 @@ import cors from "cors";
 // import MemoryStoreFactory from 'memorystore';
 
 
-import { checkUserExist, registerUser, authenticateUser, updatePassword, addInternship, updateInternship, getAllInternships, getInternshipsByID, deleteInternshipByID, enrolledInternship, addContent, updateInternshipContent, getContent, updateProgress, addCourse, updateCourse, deleteCourseByID, addCourseContent, updatecourseContent, updateUserData, addService, updateService, deleteServiceByID, enrolledCourse, updateCourseProgress, getCourseContent, getAllCourses, getCourseByID, applyService, getAllServices, getServiceByID, checkOtp, deleteOtp, setVerify, checkVerified, deleteUnverified, saveForgetPasswordOtp, getUserByID, verifyToken, getAppliedServiceDataById } from './database.js'
+import { checkUserExist, registerUser, authenticateUser, updatePassword, addInternship, updateInternship, getAllInternships, getInternshipsByID, deleteInternshipByID, enrolledInternship, addContent, updateInternshipContent, getContent, updateProgress, addCourse, updateCourse, deleteCourseByID, addCourseContent, updatecourseContent, updateUserData, addService, updateService, deleteServiceByID, enrolledCourse, updateCourseProgress, getCourseContent, getAllCourses, getCourseByID, applyService, getAllServices, getServiceByID, checkOtp, deleteOtp, setVerify, checkVerified, deleteUnverified, saveForgetPasswordOtp, getUserByID, verifyToken, getAppliedServiceDataById, getAppliedServiceDataByServiceId } from './database.js'
 import { sendOTPMail, generateOTP, checkAdmin } from './utils.js'
 import { useParams } from 'react-router-dom';
 
@@ -243,6 +243,22 @@ app.get('/getAppliedServiceData/:userid', async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal server Error' });
     }
 });
+
+
+app.get('/getAppliedSpecificServiceData/:serviceid', async (req, res) => {
+    try {
+        const serviceid = req.params.serviceid;
+        console.log(serviceid);
+        const servicedata = await getAppliedServiceDataByServiceId(serviceid);
+        if (servicedata) {
+            res.json({ success: true, servicedata });
+        }
+    } catch (error) {
+        console.log('error getting applied service data', error);
+        res.status(500).json({ success: false, message: 'Internal server Error' });
+    }
+});
+
 
 
 

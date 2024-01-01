@@ -20,6 +20,8 @@ import PrivateRoute from "./components/PrivateRoute";
 import ApplyService from "./components/ApplyService";
 import ProfileNavbar from "./components/ProfileNavbar";
 import EnrolledService from "./components/EnrolledService";
+import TrackService from "./components/TrackService";
+import InternshipPage from "./components/InternshipPage";
 
 function App() {
 
@@ -58,14 +60,18 @@ function App() {
               setProgress={setProgress} />}
           />
 
-          <Route path="enrolledservices" element={<><EnrolledService /> <ProfileNavbar /></>} />
 
           <Route path="/applyservice/:serviceID" element={<ApplyService />} />
+
+          <Route path="/enrolledservices" element={<><EnrolledService /> <ProfileNavbar /></>} />
+
+          <Route path="/trackservice/:serviceApplyID" element={<><TrackService />  <ProfileNavbar /></>} />
+
+          <Route path="/internship" element={<InternshipPage />} />
 
           <Route path="/otp/:otptype" element={<Otp setProgress={setProgress} trigger={setOpenlogin} />} />
           <Route path="/forgetpassword" element={<Forgetpassword setProgress={setProgress} />} />
 
-          {/* <Route path="/profileNavbar" element={<ProfileNavbar />} /> */}
 
           <Route path="*" element={<Errorpage setProgress={setProgress} trigger={setOpenlogin} />} />
 

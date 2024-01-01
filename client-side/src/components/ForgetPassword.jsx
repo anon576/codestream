@@ -64,7 +64,7 @@ const Forgetpassword = (props) => {
 
     return (
         <div className='register'>
-            <form action="" className='login-form' onSubmit={handleSubmit(onSubmit)}>
+            <form action="" className='login-form otp-main-form' onSubmit={handleSubmit(onSubmit)}>
                 <h1>Forget Password</h1>
                 <div className="login-inputs">
                     <div>

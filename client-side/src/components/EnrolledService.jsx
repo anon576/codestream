@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import "../style/enrolledservices.css"
+import LoadingBar from 'react-top-loading-bar'
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 
 const EnrolledService = () => {
     const [userData, setUserData] = useState({});
@@ -79,8 +81,6 @@ const EnrolledService = () => {
         }
     };
 
-    
-
     // useEffect(() => {
     //     const fetchData = async () => {
     //         await fetchUserProfile();
@@ -125,12 +125,19 @@ const EnrolledService = () => {
                             <p>{data.projectDeadline}</p>
                         </div>
 
-                        <div>
+                        <div className='status-progress'>
                             <span>Status : </span>
-                            <p>16%</p>
+                            <div className="progress-bar-container">
+                                <div className="progress-bar">
+                                    <div className="progress-bar-filled" style={{ width: `${data.stage6 || data.stage5 || data.stage4 || data.stage3 || data.stage2 || data.stage1 || "0"}%` }}>
+                                    </div>
+                                </div>
+                            </div>
+                            <p>{`${data.stage6 || data.stage5 || data.stage4 || data.stage3 || data.stage2 || data.stage1 || "0"}%`}</p>
+
                         </div>
 
-                        <button className='home-button'>Tract Order</button>
+                        <Link to={`/trackservice/${data.serviceApplyID}`}><button className='home-button'>Tract Order</button></Link>
                     </div>
                 ))}
 

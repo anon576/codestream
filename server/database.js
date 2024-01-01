@@ -807,6 +807,17 @@ export async function getAppliedServiceDataById(userid) {
 }
 
 
+export async function getAppliedServiceDataByServiceId(serviceid) {
+    try {
+        const [serviceData] = await pool.query('SELECT * FROM serviceApply WHERE serviceApplyID = ?', [serviceid]);
+
+        return serviceData;
+    } catch (error) {
+        console.error('Error getting Applied serviceData by service id:', error);
+        throw error; // Rethrow the error to be handled by the caller
+    }
+}
+
 export async function getAllServices() {
     try {
         const [service] = await pool.query('SELECT * FROM service');
