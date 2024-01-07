@@ -4,6 +4,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 dotenv.config()
 
+const secretKey = process.env.SECRETKEY;
+
 const pool = mysql.createPool({
     host: process.env.HOST,
     user: process.env.DBUSER,
@@ -31,6 +33,56 @@ export async function getUserByID(id) {
         throw error;
     }
 }
+
+
+export async function getDashboardCardData() {
+    try {
+        const totalUsersResult = await pool.query('SELECT COUNT(userID) AS totalUsers FROM users');
+        const totalActiveServicesResult = await pool.query('SELECT COUNT(*) AS totalActiveServices FROM serviceApply WHERE stage6 IS NULL');
+        const totalIncomeResult = await pool.query('SELECT SUM(amount) AS totalIncome FROM transactions');
+        const totalSalesResult = await pool.query('SELECT COUNT(transactionID) AS totalSales FROM transactions');
+
+        const totalUsers = totalUsersResult[0][0].totalUsers;
+        const totalActiveServices = totalActiveServicesResult[0][0].totalActiveServices;
+        const totalIncome = totalIncomeResult[0][0].totalIncome;
+        const totalSales = totalSalesResult[0][0].totalSales;
+
+        // console.log(totalUsersResult[0][0].totalUsers)
+
+        // console.log(`totalusers: ${totalUsers}, totalActiveServices: ${totalActiveServices}, totalIncome: ${totalIncome}, totalSales: ${totalSales}`);
+
+        return { totalUsers, totalActiveServices, totalIncome, totalSales };
+    } catch (error) {
+        console.error('Error getting dashboard card data:', error);
+        throw error; // Rethrow the error to be handled by the caller
+    }
+}
+
+
+export async function getAllUsers() {
+    try {
+        const [allusers] = await pool.query('SELECT * FROM users');
+        return { allusers };
+    } catch (error) {
+        console.error('Error getting all users:', error);
+        throw error; // Rethrow the error to be handled by the caller
+    }
+}
+
+export async function addUser(name, email, password) {
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const [insertResult] = await pool.query(
+            'INSERT INTO users (name, email, password, verify) VALUES (?, ?, ?, ?)',
+            [name, email, hashedPassword, "True"]
+        );
+        return insertResult;
+    } catch (error) {
+        console.error('Error adding user:', error);
+        throw new Error('User addition failed'); // Rethrow a more specific error message
+    }
+}
+
 
 
 // const verifyToken = (req, res, next) => {
@@ -66,7 +118,7 @@ const verifyToken = (req, res, next) => {
     }
 
     // jwt.verify(token, 'yourSecretKey', (err, decoded) => {
-    jwt.verify(token, 'yourSecretKey', (err, decoded) => {
+    jwt.verify(token, secretKey, (err, decoded) => {
         if (err) {
             return res.status(401).json({ message: 'Unauthorized: Invalid token' });
         }
@@ -77,31 +129,7 @@ const verifyToken = (req, res, next) => {
         next();
     });
 };
-
 export { verifyToken };
-
-// const verifyToken = async (token) => {
-//     console.log(token);
-
-//     if (!token) {
-//         throw { status: 401, message: 'Unauthorized: No token provided' };
-//     }
-
-//     try {
-//         const decoded = await jwt.verify(token, 'yourSecretKey');
-//         console.log('Decoded Token Payload:', decoded);
-
-//         if (decoded && decoded.userId) {
-//             return decoded.userId;
-//         } else {
-//             throw { status: 401, message: 'Unauthorized: Invalid token payload' };
-//         }
-//     } catch (err) {
-//         throw { status: 401, message: 'Unauthorized: Invalid token' };
-//     }
-// };
-
-// export { verifyToken };
 
 
 export async function deleteUserByID(id) {
@@ -270,7 +298,6 @@ export async function updateUserData(id, name, college, address, dob, mobile) {
 
 
 function generateAuthToken(userId) {
-    const secretKey = 'yourSecretKey'; // Replace with your actual secret key
     return jwt.sign({ userId }, secretKey, { expiresIn: '365d' }); // Adjust the expiration time as needed
 }
 
@@ -730,14 +757,28 @@ export async function updateCourseProgress(pageNo, userID, courseID) {
 
 
 //Add service-------------------------------
-export async function addService(name, imgurl, description, tabDescrition) {
+export async function addService(name, imgurl, description, tabDescription, whyChoose, keyPoints) {
     try {
         const [service] = await pool.query(
-            'INSERT INTO service (name, imgurl, description, tabDescrition) VALUES (?, ?, ?, ?)',
-            [name, imgurl, description, tabDescrition]
+            'INSERT INTO service (name, imgurl, description, tabDescrition, whyChoose, keyPoints) VALUES (?, ?, ?, ?, ?, ?)',
+            [name, imgurl, description, tabDescription, whyChoose, keyPoints]
         );
 
-        return service.insertId;
+        return service;
+    } catch (error) {
+        console.error('Error adding service:', error);
+        throw error; // Rethrow the error to be handled by the caller
+    }
+}
+
+export async function addTransactionData(budget, serviceApplyID, userID, serviceType) {
+    try {
+        const [service] = await pool.query(
+            'INSERT INTO transactions (amount, serviceApplyID, userID, Reason) VALUES (?, ?, ?, ?)',
+            [budget, serviceApplyID, userID, serviceType]
+        );
+
+        return service;
     } catch (error) {
         console.error('Error adding service:', error);
         throw error; // Rethrow the error to be handled by the caller
@@ -748,13 +789,13 @@ export async function addService(name, imgurl, description, tabDescrition) {
 
 
 //Update service------------------------------------
-export async function updateService(id, name, imgurl, description, tabDescrition) {
+export async function updateService(serviceID, name, imgurl, description, tabDescription, whyChoose, keyPoints) {
     try {
         const [service] = await pool.query(
             `update service 
-            set name = ?, imgurl=?, description=?, tabdescrition=?
+            set name = ?, imgurl=?, description=?, tabdescrition=?, whyChoose=?, keyPoints=?
             where serviceID = ?`,
-            [name, imgurl, description, tabDescrition, id]
+            [name, imgurl, description, tabDescription, whyChoose, keyPoints, serviceID]
         );
 
         return { message: 'Service updated successfully' };
@@ -818,6 +859,18 @@ export async function getAppliedServiceDataByServiceId(serviceid) {
     }
 }
 
+export async function getTransactionStatus(serviceid) {
+    try {
+
+        const [user] = await pool.query('SELECT * FROM transactions WHERE serviceApplyID = ?', [serviceid]);
+
+        return user[0] !== undefined;
+    } catch (error) {
+        console.error('Error checking user existence:', error);
+        throw error;
+    }
+}
+
 export async function getAllServices() {
     try {
         const [service] = await pool.query('SELECT * FROM service');
@@ -838,6 +891,35 @@ export async function getServiceByID(id) {
         return service.length > 0 ? service[0] : null;
     } catch (error) {
         console.error('Error fetching service by ID:', error);
+        throw error; // Rethrow the error to be handled by the caller
+    }
+}
+
+
+
+export async function getAllActiveServices() {
+    try {
+        const [activeServices] = await pool.query('SELECT * FROM serviceApply');
+        return { activeServices }; // Return the entire array of services
+    } catch (error) {
+        console.error('Error fetching all active services:', error);
+        throw error; // Rethrow the error to be handled by the caller
+    }
+}
+
+
+export async function updateActiveService(serviceApplyID, budget, projectDeadline, outStandingAmount, AdvancedPayment, FinalPayment, projectDescription, stage1, stage2, stage3, stage4, stage5, stage6) {
+    try {
+        const [activeService] = await pool.query(
+            `update serviceApply 
+            set budget = ?, projectDeadline=?, outStandingAmount=?, AdvancedPayment=?, FinalPayment=?, projectDescription=?, stage1=?, stage2=?, stage3=?, stage4=?, stage5=?, stage6=?
+            where serviceApplyID = ?`,
+            [budget, projectDeadline, outStandingAmount, AdvancedPayment, FinalPayment, projectDescription, stage1, stage2, stage3, stage4, stage5, stage6, serviceApplyID]
+        );
+
+        return { message: 'active Service updated successfully' };
+    } catch (error) {
+        console.error('Error updating active service:', error);
         throw error; // Rethrow the error to be handled by the caller
     }
 }

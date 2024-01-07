@@ -1,0 +1,138 @@
+.active-services {
+    min-height: calc(100vh - 80px);
+    height: fit-content;
+    width: calc(100% - 16rem);
+    margin-left: 16rem;
+    margin-top: 80px;
+    padding: 20px;
+    background-color: #cfdbd5;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+@media(max-width:650px) {
+    .active-services {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+/* .description-container {
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+    background-color: rgba(128, 128, 128, 0.042);
+    z-index: 100;
+} */
+
+.description-container {
+    position: fixed;
+    min-height: calc(100vh - 80px);
+    width: calc(100% - 16rem);
+    margin-left: 16rem;
+    margin-top: 80px;
+    background-color: rgba(255, 0, 0, 0.097);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    display: none;
+}
+
+.active-description {
+    display: flex;
+}
+
+@media(max-width:650px) {
+    .description-container {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+
+.description-card {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+.description-card p {
+    box-shadow: 0px 0px 10px gray;
+    background-color: aliceblue;
+    padding: 10px;
+}
+
+
+
+.update-form-container {
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.388);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    display: none;
+}
+
+.active-update-form {
+    display: flex;
+}
+
+.update-from {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: rgb(192, 194, 196);
+    box-shadow: 0px 0px 10px rgb(0, 0, 0);
+    padding: 10px;
+    width: 30rem;
+    border-radius: 10px;
+}
+
+.update-from input,
+.update-from textarea {
+    background-color: #ffffff;
+    color: black;
+}
+
+.update-from div {
+    display: flex;
+    flex-direction: column;
+}
+
+.status {
+    display: flex;
+    flex-direction: row;
+}
+
+.status div {
+    display: flex;
+    flex-direction: row;
+}
+
+.status label {
+    user-select: none;
+}
+
+.status-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+@media(max-width:500px) {
+    .update-from {
+        width: 100%;
+    }
+
+    .status div {
+        display: flex;
+        flex-direction: column;
+    }
+}

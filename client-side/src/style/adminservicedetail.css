@@ -1,0 +1,33 @@
+.admin-servicedetail {
+    min-height: calc(100vh - 80px);
+    height: fit-content;
+    width: calc(100% - 16rem);
+    margin-left: 16rem;
+    margin-top: 80px;
+    padding: 20px;
+    background-color: #cfdbd5;
+    display: flex;
+    flex-direction: column;
+    /* justify-content: center; */
+    align-items: center;
+}
+
+@media(max-width:650px) {
+    .admin-servicedetail {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+.admin-servicedetail-container{
+    display: flex;
+    flex-direction: column;
+    width: 40rem;
+    gap: 20px;
+}
+
+.admin-servicedetail-header{
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}

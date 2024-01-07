@@ -3,13 +3,14 @@ import bodyparser from 'body-parser'
 import session from 'express-session'
 import NodeCache from "node-cache";
 import cors from "cors";
+import Razorpay from 'razorpay';
+import crypto from 'crypto';
 // import jwt from 'jsonwebtoken';
 // import MemoryStoreFactory from 'memorystore';
 
 
-import { checkUserExist, registerUser, authenticateUser, updatePassword, addInternship, updateInternship, getAllInternships, getInternshipsByID, deleteInternshipByID, enrolledInternship, addContent, updateInternshipContent, getContent, updateProgress, addCourse, updateCourse, deleteCourseByID, addCourseContent, updatecourseContent, updateUserData, addService, updateService, deleteServiceByID, enrolledCourse, updateCourseProgress, getCourseContent, getAllCourses, getCourseByID, applyService, getAllServices, getServiceByID, checkOtp, deleteOtp, setVerify, checkVerified, deleteUnverified, saveForgetPasswordOtp, getUserByID, verifyToken, getAppliedServiceDataById, getAppliedServiceDataByServiceId } from './database.js'
-import { sendOTPMail, generateOTP, checkAdmin } from './utils.js'
-import { useParams } from 'react-router-dom';
+import { checkUserExist, registerUser, authenticateUser, updatePassword, addInternship, updateInternship, getAllInternships, getInternshipsByID, deleteInternshipByID, enrolledInternship, addContent, updateInternshipContent, getContent, updateProgress, addCourse, updateCourse, deleteCourseByID, addCourseContent, updatecourseContent, updateUserData, addService, updateService, deleteServiceByID, enrolledCourse, updateCourseProgress, getCourseContent, getAllCourses, getCourseByID, applyService, getAllServices, getServiceByID, checkOtp, deleteOtp, setVerify, checkVerified, deleteUnverified, saveForgetPasswordOtp, getUserByID, verifyToken, getAppliedServiceDataById, getAppliedServiceDataByServiceId, getAllUsers, getDashboardCardData, getAllActiveServices, addUser, updateActiveService, addTransactionData, getTransactionStatus } from './database.js'
+import { sendOTPMail, generateOTP, checkAdmin, verifyAdminToken } from './utils.js'
 
 const app = express()
 app.use(bodyparser.json())
@@ -31,6 +32,104 @@ app.use(cors({
     credentials: true,
 }));
 
+// const razorpay = new Razorpay({
+//     key_id: 'rzp_test_Zjom8IGzUOcgy1',
+//     key_secret: 'QTCPiD4BPPLsHcVtSN3DsUe4',
+// });
+
+
+
+// -----------------payment-----------------------------------
+app.post("/orders", async (req, res) => {
+    try {
+        const instance = new Razorpay({
+            key_id: 'rzp_test_Zjom8IGzUOcgy1',
+            key_secret: 'QTCPiD4BPPLsHcVtSN3DsUe4',
+        });
+
+        // Validate the order amount
+        const amount = parseFloat(req.body.amount);
+        if (isNaN(amount) || amount <= 0) {
+            return res.status(400).json({ message: "Invalid order amount" });
+        }
+
+        const options = {
+            amount: amount * 100,
+            currency: "INR",
+            receipt: crypto.randomBytes(10).toString("hex"),
+        };
+
+        instance.orders.create(options, (error, order) => {
+            if (error) {
+                console.error(error);
+                return res.status(500).json({ message: "Error creating order" });
+            }
+            res.status(200).json({ data: order });
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error!" });
+    }
+});
+
+app.post("/verify", async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const sign = razorpay_order_id + "|" + razorpay_payment_id;
+        const expectedSign = crypto
+            .createHmac("sha256", 'QTCPiD4BPPLsHcVtSN3DsUe4')
+            .update(sign.toString())
+            .digest("hex");
+
+        if (razorpay_signature === expectedSign) {
+            return res.status(200).json({ message: "Payment verified successfully" });
+        } else {
+            return res.status(400).json({ message: "Invalid signature sent!" });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error!" });
+    }
+});
+
+app.post('/addtransactiondata', async (req, res) => {
+    try {
+        const { budget, serviceApplyID, userID, serviceType } = req.body;
+        console.log(req.body)
+
+        // Add service to the database
+        const result = await addTransactionData(budget, serviceApplyID, userID, serviceType);
+        // console.log(result.insertId)
+
+        // Check if the addition was successful
+        if (result) {
+            // Return success message
+            res.json({ success: true, message: 'Service added successfully', serviceID: result.insertId });
+        } else {
+            // Handle the case where the addition failed
+            res.status(400).json({ message: 'Service addition failed' });
+        }
+    } catch (error) {
+        console.error('Error adding service:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+app.get('/gettransactionstatus/:serviceApplyid', async (req, res) => {
+    try {
+        const serviceid = req.params.serviceApplyid;
+        console.log(serviceid);
+        const servicedata = await getTransactionStatus(serviceid);
+        if (servicedata) {
+            res.json({ success: true, servicedata });
+        } else {
+            res.json({ success: false });
+        }
+    } catch (error) {
+        console.log('error getting applied service data', error);
+        res.status(500).json({ success: false, message: 'Internal server Error' });
+    }
+});
 
 //------------Home Page Router----------------------
 
@@ -123,6 +222,7 @@ app.get("/services", async (req, res) => {
 
 app.get("/service/:id", async (req, res) => {
     try {
+
         const id = req.params.id;
         const service = await getServiceByID(id);
 
@@ -130,7 +230,7 @@ app.get("/service/:id", async (req, res) => {
             return res.status(404).send("Service not found");
         }
 
-        res.send(service);
+        res.send({ success: true, service: service });
     } catch (error) {
         console.error("Error fetching service by ID:", error);
         res.status(500).send("Internal Server Error");
@@ -258,6 +358,21 @@ app.get('/getAppliedSpecificServiceData/:serviceid', async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal server Error' });
     }
 });
+
+
+// app.get('/getAppliedservicedata/:serviceApplyID', async (req, res) => {
+//     try {
+//         const serviceApplyID = req.params.serviceApplyID;
+//         console.log(serviceApplyID);
+//         const servicedata = await getAppliedServiceDataByServiceId(serviceApplyID);
+//         if (servicedata) {
+//             res.json({ success: true, servicedata });
+//         }
+//     } catch (error) {
+//         console.log('error getting applied service data', error);
+//         res.status(500).json({ success: false, message: 'Internal server Error' });
+//     }
+// });
 
 
 
@@ -501,15 +616,118 @@ app.get("/content/:iID/:pageNo", async (req, res) => {
 
 // Admin Login--------------------------
 app.post('/adminLogin', async (req, res) => {
-    const { username, password } = req.body
-    if (checkAdmin(username, password)) {
-        req.session.adminData = { username, password }
-        res.json({ message: 'Login Successfull' })
+    const { username, password } = req.body;
+    const isAdmin = await checkAdmin(username, password);
+    if (isAdmin) {
+        const { adminToken } = isAdmin;
+        res.json({ message: 'Login Successful', adminToken });
     } else {
-        res.json({ message: 'Invalid Credentials' })
+        res.status(401).json({ message: 'Invalid Credentials' });
     }
+});
 
-})
+app.get('/getDashboardCardData', verifyAdminToken, async (req, res) => {
+    try {
+
+        const adminToken = req.headers.authorization
+        console.log(adminToken)
+
+        const { totalUsers, totalActiveServices, totalIncome, totalSales } = await getDashboardCardData();
+        console.log(`totalusers: ${totalUsers}, totalActiveServices: ${totalActiveServices}, totalIncome: ${totalIncome}, totalSales: ${totalSales}`)
+        res.send({ totalUsers, totalActiveServices, totalIncome, totalSales }); // Sending as an object
+    } catch (error) {
+        console.error("Error fetching card data:", error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+app.get('/getallusers', verifyAdminToken, async (req, res) => {
+    try {
+
+        const adminToken = req.headers.authorization
+
+        const { allusers } = await getAllUsers();
+        res.send(allusers);
+    } catch (error) {
+        console.error("Error fetching all users:", error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+app.post('/adduser', verifyAdminToken, async (req, res) => {
+    try {
+
+        const adminToken = req.headers.authorization
+
+        const { name, email, password } = req.body;
+        console.log(req.body)
+        const emailExists = await checkUserExist(email);
+        const isVerified = await checkVerified(email);
+
+        if (emailExists) {
+            if (!isVerified) {
+
+                deleteUnverified(email);
+                console.log(name, email, password)
+                const user = await addUser(name, email, password);
+                console.log("data stored")
+
+                res.status(200).json({
+                    message: 'data Added successfully',
+                });
+
+            } else {
+                return res.status(400).json({
+                    message: 'Email is already registered',
+                });
+            }
+        } else {
+            const user = await registerUser(name, email, password);
+            console.log("data stored")
+
+            res.status(200).json({
+                message: 'data Added successfully',
+            });
+        }
+    } catch (error) {
+        console.error('Error adding user:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+
+app.get('/getactiveservices', verifyAdminToken, async (req, res) => {
+    try {
+
+        const adminToken = req.headers.authorization
+
+        const { activeServices } = await getAllActiveServices();
+        res.send(activeServices);
+    } catch (error) {
+        console.error("Error fetching all acrive services:", error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+app.put('/updateactiveservice', async (req, res) => {
+    try {
+        const { serviceApplyID, budget, projectDeadline, outStandingAmount, AdvancedPayment, FinalPayment, projectDescription, stage1, stage2, stage3, stage4, stage5, stage6 } = req.body;
+
+        // Update service in the database
+        const result = await updateActiveService(serviceApplyID, budget, projectDeadline, outStandingAmount, AdvancedPayment, FinalPayment, projectDescription, stage1, stage2, stage3, stage4, stage5, stage6);
+
+        if (result && result.message === 'active Service updated successfully') {
+            // Return success message
+            res.json({ success: true, message: 'active Services updated successfully' });
+        } else {
+            // Handle the case where the update failed
+            res.status(400).json({ message: 'active Service update failed' });
+        }
+    } catch (error) {
+        console.error('Error updating service:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
 
 
 
@@ -807,22 +1025,24 @@ app.post('/updateCourseContent', async (req, res) => {
 // Add service------------------------
 app.post('/addService', async (req, res) => {
     try {
-        const { username, password } = req.session.adminData;
+        // const { username, password } = req.session.adminData;
 
-        // Check admin credentials
-        if (!checkAdmin(username, password)) {
-            return res.status(401).json({ message: 'Unauthorized: Login with admin credentials.' });
-        }
+        // // Check admin credentials
+        // if (!checkAdmin(username, password)) {
+        //     return res.status(401).json({ message: 'Unauthorized: Login with admin credentials.' });
+        // }
 
-        const { name, imgurl, description, tabDescrition } = req.body;
+        const { name, imgurl, description, tabDescription, whyChoose, keyPoints } = req.body;
+        // console.log(req.body)
 
         // Add service to the database
-        const result = await addService(name, imgurl, description, tabDescrition);
+        const result = await addService(name, imgurl, description, tabDescription, whyChoose, keyPoints);
+        // console.log(result.insertId)
 
         // Check if the addition was successful
-        if (result && typeof result.insertId === 'number') {
+        if (result) {
             // Return success message
-            res.json({ message: 'Service added successfully', serviceID: result.insertId });
+            res.json({ success: true, message: 'Service added successfully', serviceID: result.insertId });
         } else {
             // Handle the case where the addition failed
             res.status(400).json({ message: 'Service addition failed' });
@@ -837,24 +1057,20 @@ app.post('/addService', async (req, res) => {
 
 
 // Update Service------------------------------
-app.post('/updateService', async (req, res) => {
+app.put('/updateService', verifyAdminToken, async (req, res) => {
     try {
-        const { username, password } = req.session.adminData;
 
-        // Check admin credentials
-        if (!checkAdmin(username, password)) {
-            return res.status(401).json({ message: 'Unauthorized: Login with admin credentials.' });
-        }
+        const adminToken = req.headers.authorization
 
-        const { id, name, imgurl, description, tabDescrition } = req.body;
+        const { serviceID, name, imgurl, description, tabDescription, whyChoose, keyPoints } = req.body;
 
         // Update service in the database
-        const result = await updateService(id, name, imgurl, description, tabDescrition);
+        const result = await updateService(serviceID, name, imgurl, description, tabDescription, whyChoose, keyPoints);
 
         // Check if the update was successful
         if (result && result.message === 'Service updated successfully') {
             // Return success message
-            res.json({ message: 'Service updated successfully' });
+            res.json({ success: true, message: 'Service updated successfully' });
         } else {
             // Handle the case where the update failed
             res.status(400).json({ message: 'Service update failed' });
@@ -870,20 +1086,16 @@ app.post('/updateService', async (req, res) => {
 
 
 // Delate Service--------------------------
-app.post('/deleteService/:id', async (req, res) => {
+app.post('/deleteService/:id', verifyAdminToken, async (req, res) => {
     try {
-        const { username, password } = req.session.adminData;
 
-        // Check admin credentials
-        if (!checkAdmin(username, password)) {
-            return res.status(401).json({ message: 'Unauthorized: Login with admin credentials.' });
-        }
+        const adminToken = req.headers.authorization
 
         const serviceID = req.params.id;
         const deletedService = await deleteServiceByID(serviceID);
 
         if (deletedService === undefined) {
-            return res.json({ message: 'Service deleted successfully' });
+            return res.json({ success: true, message: 'Service deleted successfully' });
         } else {
             return res.status(404).json({ message: 'Service not found or delete operation failed' });
         }
@@ -892,6 +1104,8 @@ app.post('/deleteService/:id', async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
+
 
 
 

@@ -103,7 +103,7 @@ const Header = (props) => {
           <Link to="/about" onClick={handleMenu}>About</Link>
           <Link to="#" onClick={handleMenu}>Courses</Link>
           <Link to="/services" onClick={handleMenu}>Services</Link>
-          <Link to="#" onClick={handleMenu}>Internship</Link>
+          <Link to="/internship" onClick={handleMenu}>Internship</Link>
           <Link to="#" onClick={handleMenu}>Blog</Link>
           <Link to="/contact" onClick={handleMenu}>Contact</Link>
           {/* <div className="theme">

@@ -86,8 +86,8 @@ const ApplyService = () => {
             contactStyle: '',
             contactTime: '',
             projectDescription: '',
-            budget: '0',
-            projectDeadline: 'Nan',
+            budget: '',
+            projectDeadline: '',
             howyouknowus: ' ',
             serviceType: serviceDetails.name,
             serviceid: serviceDetails.serviceID
@@ -123,8 +123,8 @@ const ApplyService = () => {
                     contactStyle: '',
                     contactTime: '',
                     projectDescription: '',
-                    budget: '0',
-                    projectDeadline: 'Not Given',
+                    budget: '',
+                    projectDeadline: '',
                     howyouknowus: ' ',
                 });
             }
@@ -220,17 +220,19 @@ const ApplyService = () => {
                         </div>
                         <div className="budget-deadline">
                             <div>
-                                <p>Budget (optional) :</p>
-                                <input type="text" name='budget'
+                                <p>Budget (In INR) :</p>
+                                <input type="number" name='budget'
                                     value={formData.budget}
                                     onChange={handleInputChange}
+                                    required
                                 />
                             </div>
                             <div>
-                                <p>Deadline (optional) :</p>
+                                <p>Deadline(Days/Weeks/Months):</p>
                                 <input type="text" name='projectDeadline'
                                     value={formData.projectDeadline}
                                     onChange={handleInputChange}
+                                    required
                                 />
                             </div>
                         </div>
@@ -252,12 +254,12 @@ const ApplyService = () => {
                 <div className="service-apply-info">
                     <h1 className="service-apply-info-header">Instructions</h1>
                     <ul>
-                        <li>Lorem ipsum dolor sit amet.</li>
-                        <li>Lorem ipsum dolor sit amet.</li>
-                        <li>Lorem ipsum dolor sit amet.</li>
-                        <li>Lorem ipsum dolor sit amet.</li>
-                        <li>Lorem ipsum dolor sit amet.</li>
-                        <li>Lorem ipsum dolor sit amet.</li>
+                        <li>Please provide a concise and clear project description so that we can assist you better.</li>
+                        <li>After filling the form our team will contact you within 24-36hrs in your preferred time and style.</li>
+                        <li>Once the prototype is made you need to do an advance payment of 30% of the total order value to confirm the project.</li>
+                        <li>After receiving the advance payment, our team will start working on your project, following the provided deadline. Once completed, you will be notified, and we will schedule a meeting to present the final model.</li>
+                        <li>After confirmation you need to pay the remaining i.e. 70% amount after which the Project will be handed over to you.</li>
+                        <li>If you wish to make some changes in the model( before deployment feel free) to contact us.</li>
                     </ul>
                 </div>
             </div>

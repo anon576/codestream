@@ -3,11 +3,14 @@ import dotenv from 'dotenv'
 import fs from 'fs'
 import pdf from 'html-pdf-node'
 import cron from 'node-cron'
-import { getTodaysEnrollledInternship,getInternshipsByID,getUserByID,getTodaysComplateEnrollledInternship} from './database.js'
+import jwt from 'jsonwebtoken';
+import { getTodaysEnrollledInternship, getInternshipsByID, getUserByID, getTodaysComplateEnrollledInternship } from './database.js'
 dotenv.config()
 
 const admin = process.env.admin
 const adminPassword = process.env.adminPassword
+
+const secretKey = process.env.SECRETKEY;
 
 
 
@@ -16,8 +19,8 @@ const adminPassword = process.env.adminPassword
 // -----------------Mail function---------------------
 
 const transporter = nodemailer.createTransport({
-    service:'gmail',
-    auth:{
+    service: 'gmail',
+    auth: {
         user: process.env.email,
         pass: process.env.password,
     },
@@ -45,22 +48,56 @@ export const sendOTPMail = (email, otp, subject) => {
 
 export const generateOTP = () => {
     return Math.floor(1000 + Math.random() * 9000).toString();
-  };
+};
 
 
 
 // -------------------Admin function--------------------
-export const checkAdmin = (username,password)=>{
-    if(username == admin & password == adminPassword){
-        return true
-    }
-    return false
+
+function adminTokenGenerate(username, password) {
+    return jwt.sign({ username, password }, secretKey, { expiresIn: '1d' });
 }
 
 
+// export const checkAdmin = (username, password) => {
+//     if (username === admin && password === adminPassword) {
+//         const adminToken = adminTokenGenerate(username, password);
+//         return { adminToken }
+//     }
+//     return false
+// }
 
 
+export const checkAdmin = (username, password) => {
+    if (username === admin && password === adminPassword) {
+        const adminToken = adminTokenGenerate(username, password);
+        return { adminToken };
+    }
+    return false;
+};
 
+
+const verifyAdminToken = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    const adminToken = authHeader.split(' ')[1]
+    // console.log(token)
+
+    if (!adminToken) {
+        return res.status(401).json({ message: 'Unauthorized: No token provided' });
+    }
+
+    // jwt.verify(token, 'yourSecretKey', (err, decoded) => {
+    jwt.verify(adminToken, secretKey, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+        }
+
+        console.log('Decoded Token Payload:', decoded);
+        req.user = decoded; // Set user data in the request object
+        next();
+    });
+};
+export { verifyAdminToken };
 
 
 
@@ -80,7 +117,7 @@ cron.schedule('0 3 * * *', async () => {
             const user = await getUserByID(r.userID);
             const internship = await getInternshipsByID(r.internshipsID);
             console.log("4");
-            sendCertificate(user.email, user.name, r.internshipsID, internship.name,1);
+            sendCertificate(user.email, user.name, r.internshipsID, internship.name, 1);
         }
     } catch (error) {
         console.error('Error in cron job:', error.message);
@@ -97,7 +134,7 @@ cron.schedule('0 4 * * *', async () => {
         for (const r of receiver) {
             const user = await getUserByID(r.userID);
             const internship = await getInternshipsByID(r.internshipsID);
-            sendCertificate(user.email, user.name, r.internshipsID, internship.name,0);
+            sendCertificate(user.email, user.name, r.internshipsID, internship.name, 0);
         }
     } catch (error) {
         console.error('Error in cron job:', error.message);
@@ -106,10 +143,10 @@ cron.schedule('0 4 * * *', async () => {
 
 // ------email,name,userID,dates--------Certificate Send uisng mail--------------
 
-const  sendCertificate = async (email,name,iID,iName,n)=>{
+const sendCertificate = async (email, name, iID, iName, n) => {
     const todayDate = new Date().toISOString().split('T')[0]
-    if(n == 0){
-        const html =  `
+    if (n == 0) {
+        const html = `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -198,8 +235,8 @@ const  sendCertificate = async (email,name,iID,iName,n)=>{
         </html>
         
     `
-    }else{
-        const html =  `
+    } else {
+        const html = `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -289,12 +326,12 @@ const  sendCertificate = async (email,name,iID,iName,n)=>{
         
     `
     }
-   
-        let optins = {
-        format:'A4'
+
+    let optins = {
+        format: 'A4'
     }
     let file = { content: html };
-    
+
     const pdfBuffer = await pdf.generatePdf(file, optins)
 
     const mailOptions = {
@@ -311,13 +348,13 @@ const  sendCertificate = async (email,name,iID,iName,n)=>{
         ],
     };
 
-    transporter.sendMail(mailOptions,(error,info)=>{
-        if(error){
-            console.error("error",error)
-        }else{
-            console.log("email sent",info.response)
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error("error", error)
+        } else {
+            console.log("email sent", info.response)
         }
-    })  
+    })
 }
 
 // sendCertificate('abhibhoyar141@gmail.com','Abhishek Bhoyar',1001,'Python')

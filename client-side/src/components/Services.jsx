@@ -29,6 +29,7 @@ const Services = (props) => {
       try {
         const response = await axios.get('http://localhost:8080/services');
         setServices(response.data);
+        console.log(services)
       } catch (error) {
         console.error('Error fetching services:', error);
       }

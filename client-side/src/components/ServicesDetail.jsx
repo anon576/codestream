@@ -17,7 +17,8 @@ const ServicesDetail = (props) => {
         const fetchServiceDetails = async () => {
             try {
                 const response = await axios.get(`http://localhost:8080/service/${serviceID}`);
-                setServiceDetails(response.data);
+                setServiceDetails(response.data.service);
+                console.log(serviceDetails)
             } catch (error) {
                 console.error(`Error fetching details for serviceID ${serviceID}:`, error);
             }
